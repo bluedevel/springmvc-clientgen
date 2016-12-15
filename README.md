@@ -1,0 +1,1 @@
+# springmvc-clientgen-maven-plugin
