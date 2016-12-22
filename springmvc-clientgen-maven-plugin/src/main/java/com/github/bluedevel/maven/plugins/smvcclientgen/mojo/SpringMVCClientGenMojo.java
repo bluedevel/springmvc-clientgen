@@ -33,7 +33,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         ClassLoader parentClassLoader = this.getClass().getClassLoader();
         URLClassLoader classLoader = new URLClassLoader(new URL[]{outputURL}, parentClassLoader);
 
-        getLog().info("!!!");
+
     }
 
 }
