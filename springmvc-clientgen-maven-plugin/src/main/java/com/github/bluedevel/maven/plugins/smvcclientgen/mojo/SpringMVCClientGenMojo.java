@@ -8,6 +8,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -57,7 +58,8 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
                 throw new MojoFailureException("Could not scan class", e);
             }
 
-            if (clazz.isAnnotationPresent(Controller.class)) {
+            if (clazz.isAnnotationPresent(Controller.class)
+                    || clazz.isAnnotationPresent(RestController.class)) {
                 classes.add(clazz);
             }
         }
