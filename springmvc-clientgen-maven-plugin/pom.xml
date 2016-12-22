@@ -15,7 +15,6 @@
         <dependency>
             <groupId>com.github.bluedevel</groupId>
             <artifactId>springmvc-clientgen-core</artifactId>
-            <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
@@ -37,6 +36,16 @@
             <version>3.5</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>0.9.9-RC2</version>
+        </dependency>
         <!-- JUnit -->
         <dependency>
             <groupId>junit</groupId>
