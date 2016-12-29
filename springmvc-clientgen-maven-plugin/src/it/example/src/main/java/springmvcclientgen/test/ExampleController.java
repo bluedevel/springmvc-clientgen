@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ExampleController {
 
-    @RequestMapping("/example")
+    @RequestMapping(path = "/example")
     public String someResource() {
         return "";
     }

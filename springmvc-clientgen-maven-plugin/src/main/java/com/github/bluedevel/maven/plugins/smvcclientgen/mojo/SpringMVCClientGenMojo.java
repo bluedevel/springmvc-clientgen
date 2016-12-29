@@ -64,8 +64,6 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
             }
         }
 
-        getLog().info("!!!" + classes);
-
         List<RequestMapping> mappings = new ArrayList<RequestMapping>();
         for (Class clazz : classes) {
             for (Method method : clazz.getMethods()) {
@@ -76,7 +74,6 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
             }
         }
 
-        getLog().info("!!!" + mappings.size());
     }
 
 }
