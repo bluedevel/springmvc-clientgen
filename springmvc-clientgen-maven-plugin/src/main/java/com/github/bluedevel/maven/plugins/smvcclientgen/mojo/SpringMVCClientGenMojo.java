@@ -1,5 +1,6 @@
 package com.github.bluedevel.maven.plugins.smvcclientgen.mojo;
 
+import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -32,6 +33,12 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
     @Parameter
     private String[] classesToScan;
 
+    @Parameter
+    private String generator;
+
+    @Parameter
+    private File targetDirectory;
+
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (classesToScan == null || classesToScan.length == 0) {
             return;
@@ -48,8 +55,25 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         ClassLoader parentClassLoader = this.getClass().getClassLoader();
         URLClassLoader classLoader = new URLClassLoader(new URL[]{outputURL}, parentClassLoader);
 
-        Set<Class> classes = new HashSet<Class>();
+        Set<Class<?>> classes = loadClassesToScan(classLoader);
+        List<ClientGeneratorConfiguration> configurations = getClientGeneratorConfigurations(classes);
+        renderClients(configurations);
+    }
 
+    private void renderClients(List<ClientGeneratorConfiguration> configurations) {
+        if (configurations.size() == 0) {
+            return;
+        } else if (configurations.size() == 1) {
+
+        }
+
+        for (ClientGeneratorConfiguration configuration : configurations) {
+            ClientGeneratorFactory.getClientGenerator(generator).render(configuration);
+        }
+    }
+
+    private Set<Class<?>> loadClassesToScan(URLClassLoader classLoader) throws MojoFailureException {
+        Set<Class<?>> classes = new HashSet<Class<?>>();
         for (String className : classesToScan) {
             Class<?> clazz;
             try {
@@ -63,17 +87,32 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
                 classes.add(clazz);
             }
         }
+        return classes;
+    }
 
-        List<RequestMapping> mappings = new ArrayList<RequestMapping>();
+    private List<ClientGeneratorConfiguration> getClientGeneratorConfigurations(Set<Class<?>> classes) {
+        List<ClientGeneratorConfiguration> configurations = new ArrayList<ClientGeneratorConfiguration>();
         for (Class clazz : classes) {
             for (Method method : clazz.getMethods()) {
                 RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
-                if (requestMapping != null) {
-                    mappings.add(requestMapping);
+
+                if (requestMapping == null) {
+                    continue;
                 }
+
+                ClientGeneratorConfiguration config = new ClientGeneratorConfiguration();
+                config.setName(requestMapping.name());
+                config.setPath(requestMapping.path());
+                config.setMethod(requestMapping.method());
+                config.setHeaders(requestMapping.headers());
+                config.setParams(requestMapping.params());
+                config.setConsumes(requestMapping.consumes());
+                config.setProduces(requestMapping.produces());
+                configurations.add(config);
             }
         }
-
+        return configurations;
     }
+
 
 }

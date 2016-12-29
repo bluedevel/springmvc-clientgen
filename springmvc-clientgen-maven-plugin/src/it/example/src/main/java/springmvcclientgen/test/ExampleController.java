@@ -9,9 +9,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ExampleController {
 
-    @RequestMapping(path = "/example")
+    @RequestMapping(value = "/example", params = "!myParam")
     public String someResource() {
         return "";
     }
 
+    @RequestMapping(value = "/example", params = "myParam=bla")
+    public String someResourceBla() {
+        return "";
+    }
 }

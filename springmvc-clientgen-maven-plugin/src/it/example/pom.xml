@@ -31,6 +31,7 @@
                     <classesToScan>
                         <param>springmvcclientgen.test.ExampleController</param>
                     </classesToScan>
+                    <generator>javascript</generator>
                 </configuration>
             </plugin>
         </plugins>
