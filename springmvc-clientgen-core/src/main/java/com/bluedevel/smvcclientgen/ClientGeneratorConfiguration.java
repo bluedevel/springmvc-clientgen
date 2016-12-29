@@ -2,13 +2,15 @@ package com.bluedevel.smvcclientgen;
 
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.util.Arrays;
+import java.lang.reflect.Method;
 
 /**
  * @author Robin Engel
  */
 public class ClientGeneratorConfiguration {
 
+    private Class<?> controllerClass;
+    private Method controllerMethod;
     private String name;
     private String[] path;
     private RequestMethod[] method;
@@ -20,7 +22,9 @@ public class ClientGeneratorConfiguration {
     public ClientGeneratorConfiguration() {
     }
 
-    public ClientGeneratorConfiguration(String name, String[] path, RequestMethod[] method, String[] params, String[] headers, String[] consumes, String[] produces) {
+    public ClientGeneratorConfiguration(Class<?> controllerClass, Method controllerMethod, String name, String[] path, RequestMethod[] method, String[] params, String[] headers, String[] consumes, String[] produces) {
+        this.controllerClass = controllerClass;
+        this.controllerMethod = controllerMethod;
         this.name = name;
         this.path = path;
         this.method = method;
@@ -28,6 +32,22 @@ public class ClientGeneratorConfiguration {
         this.headers = headers;
         this.consumes = consumes;
         this.produces = produces;
+    }
+
+    public Class<?> getControllerClass() {
+        return controllerClass;
+    }
+
+    public void setControllerClass(Class<?> controllerClass) {
+        this.controllerClass = controllerClass;
+    }
+
+    public Method getControllerMethod() {
+        return controllerMethod;
+    }
+
+    public void setControllerMethod(Method controllerMethod) {
+        this.controllerMethod = controllerMethod;
     }
 
     public String getName() {
@@ -84,52 +104,5 @@ public class ClientGeneratorConfiguration {
 
     public void setProduces(String[] produces) {
         this.produces = produces;
-    }
-
-    @Override
-    public String toString() {
-        return "ClientGeneratorConfiguration{" +
-                "name='" + name + '\'' +
-                ", path=" + Arrays.toString(path) +
-                ", method=" + Arrays.toString(method) +
-                ", params=" + Arrays.toString(params) +
-                ", headers=" + Arrays.toString(headers) +
-                ", consumes=" + Arrays.toString(consumes) +
-                ", produces=" + Arrays.toString(produces) +
-                '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ClientGeneratorConfiguration)) return false;
-
-        ClientGeneratorConfiguration that = (ClientGeneratorConfiguration) o;
-
-        if (getName() != null ? !getName().equals(that.getName()) : that.getName() != null) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(getPath(), that.getPath())) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(getMethod(), that.getMethod())) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(getParams(), that.getParams())) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(getHeaders(), that.getHeaders())) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(getConsumes(), that.getConsumes())) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        return Arrays.equals(getProduces(), that.getProduces());
-    }
-
-    @Override
-    public int hashCode() {
-        int result = getName() != null ? getName().hashCode() : 0;
-        result = 31 * result + Arrays.hashCode(getPath());
-        result = 31 * result + Arrays.hashCode(getMethod());
-        result = 31 * result + Arrays.hashCode(getParams());
-        result = 31 * result + Arrays.hashCode(getHeaders());
-        result = 31 * result + Arrays.hashCode(getConsumes());
-        result = 31 * result + Arrays.hashCode(getProduces());
-        return result;
     }
 }

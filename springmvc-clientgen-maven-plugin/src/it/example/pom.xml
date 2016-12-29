@@ -32,6 +32,7 @@
                         <param>springmvcclientgen.test.ExampleController</param>
                     </classesToScan>
                     <generator>javascript</generator>
+                    <target>${project.build.directory}/generated-sources/jsclients</target>
                 </configuration>
             </plugin>
         </plugins>
