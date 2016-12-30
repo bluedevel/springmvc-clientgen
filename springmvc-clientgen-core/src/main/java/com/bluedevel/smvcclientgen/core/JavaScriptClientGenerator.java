@@ -9,7 +9,7 @@ import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
 public class JavaScriptClientGenerator implements ClientGenerator {
 
     public String render(ClientGeneratorConfiguration config) {
-        return config.getControllerClass().getSimpleName() + " " + config.getControllerMethod().getName();
+        return config.getControllerClass().getSimpleName() + " " + config.getControllerDeclarations().get(0).getControllerMethod().getName();
     }
 
 }

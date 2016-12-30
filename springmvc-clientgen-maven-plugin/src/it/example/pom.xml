@@ -11,6 +11,11 @@
             <artifactId>spring-web</artifactId>
             <version>4.3.4.RELEASE</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.bluedevel</groupId>
+            <artifactId>springmvc-clientgen-maven-plugin</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -21,17 +26,38 @@
                 <version>1.0-SNAPSHOT</version>
                 <executions>
                     <execution>
+                        <id>first execution</id>
                         <phase>prepare-package</phase>
                         <goals>
                             <goal>generate-clients</goal>
                         </goals>
                     </execution>
+                    <!--<execution>
+                        <id>second execution</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>generate-clients</goal>
+                        </goals>
+                        <configuration>
+                            <generator>test</generator>
+                        </configuration>
+                    </execution>-->
                 </executions>
                 <configuration>
-                    <classesToScan>
-                        <param>springmvcclientgen.test.ExampleController</param>
-                    </classesToScan>
+                    <controllers>
+                        <controller>
+                            <implementation>springmvcclientgen.test.ExampleController</implementation>
+                        </controller>
+                    </controllers>
+                    <!-- Default Generator -->
                     <generator>javascript</generator>
+
+                    <!--<generators>
+                        <generator>
+                            <name>test</name>
+                            <implementation>springmvcclientgen.test.TestGenerator</implementation>
+                        </generator>
+                    </generators>-->
                     <target>${project.build.directory}/generated-sources/jsclients</target>
                 </configuration>
             </plugin>
