@@ -21,6 +21,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -121,7 +122,8 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
                 ClientGeneratorControllerDecleration decleration = new ClientGeneratorControllerDecleration();
                 decleration.setControllerMethod(method);
                 decleration.setName(requestMapping.name());
-                decleration.setPath(requestMapping.path());
+                decleration.setPath(requestMapping.path().length > 0 ?
+                        requestMapping.path() : requestMapping.value());
                 decleration.setMethod(requestMapping.method());
                 decleration.setHeaders(requestMapping.headers());
                 decleration.setParams(requestMapping.params());

@@ -14,7 +14,7 @@ public class ExampleController {
         return "";
     }
 
-    @RequestMapping(value = "/example", params = "myParam=bla")
+    @RequestMapping(path = "/exampleBla", params = "myParam=bla")
     public String someResourceBla() {
         return "";
     }
