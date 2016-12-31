@@ -3,33 +3,40 @@ package com.bluedevel.smvcclientgen.core;
 import com.bluedevel.smvcclientgen.ClientGenerator;
 import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
 import com.bluedevel.smvcclientgen.ClientGeneratorControllerDecleration;
+import org.antlr.stringtemplate.StringTemplate;
+import org.apache.commons.io.IOUtils;
+import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.util.Arrays;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
 
 /**
  * @author Robin Engel
  */
 public class JavaScriptClientGenerator implements ClientGenerator {
 
-    public String render(ClientGeneratorConfiguration config) {
-        StringBuilder source = new StringBuilder();
-        source.append("Class: ")
-                .append(config.getControllerClass().getName())
-                .append("\n");
-
-        for (ClientGeneratorControllerDecleration decleration : config.getControllerDeclarations()) {
-            source.append("Controller: ")
-                    .append(decleration.getControllerMethod().getName())
-                    .append(" Path: ")
-                    .append(Arrays.toString(decleration.getPath()))
-                    .append(" Method: ")
-                    .append(Arrays.toString(decleration.getMethod()))
-                    .append(" Produces: ")
-                    .append(Arrays.toString(decleration.getProduces()))
-                    .append("\n");
+    public String render(ClientGeneratorConfiguration config) throws Exception {
+        if (config.getControllerDeclarations().size() == 0) {
+            return "";
         }
 
-        return source.toString();
+        ClientGeneratorControllerDecleration decleration = config.getControllerDeclarations().get(0);
+
+        StringWriter writer = new StringWriter();
+        InputStream inputStream = this.getClass().getResourceAsStream("templates/javascript.js.template");
+        InputStreamReader templateReader = new InputStreamReader(inputStream);
+
+        IOUtils.copy(templateReader, writer);
+
+        StringTemplate template = new StringTemplate();
+        template.setTemplate(writer.toString());
+
+        template.setAttribute("path", decleration.getPath()[0]);
+        template.setAttribute("method",
+                decleration.getMethod().length > 0 ? decleration.getMethod()[0] : RequestMethod.GET);
+
+        return template.toString();
     }
 
 }

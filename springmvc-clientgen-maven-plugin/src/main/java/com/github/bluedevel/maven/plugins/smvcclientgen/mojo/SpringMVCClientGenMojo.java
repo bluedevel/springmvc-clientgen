@@ -1,5 +1,6 @@
 package com.github.bluedevel.maven.plugins.smvcclientgen.mojo;
 
+import com.bluedevel.smvcclientgen.ClientGenerator;
 import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
 import com.bluedevel.smvcclientgen.ClientGeneratorControllerDecleration;
 import org.apache.commons.io.FileUtils;
@@ -21,7 +22,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -150,7 +150,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         boolean isDirectory = !isFile;
 
         if (configurations.size() == 1 && isFile) {
-            writeClient(target, clientGenerator.getClientGenerator().render(configurations.get(0).getClientGeneratorConfiguration()));
+            writeClient(target, callClientGenerator(clientGenerator.getClientGenerator(), configurations.get(0).clientGeneratorConfiguration));
         } else {
             if (isFile) {
                 getLog().warn("A specific file is specified to write clients to but multiple " +
@@ -158,7 +158,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
             }
 
             for (Configuration configuration : configurations) {
-                String source = clientGenerator.getClientGenerator().render(configuration.getClientGeneratorConfiguration());
+                String source = callClientGenerator(clientGenerator.getClientGenerator(), configuration.getClientGeneratorConfiguration());
                 File file;
                 if (isDirectory) {
                     String name = configuration.getClientGeneratorConfiguration().getControllerClass().getSimpleName();
@@ -173,6 +173,14 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
 
                 writeClient(file, source);
             }
+        }
+    }
+
+    private String callClientGenerator(ClientGenerator clientGenerator, ClientGeneratorConfiguration config) throws MojoFailureException {
+        try {
+            return clientGenerator.render(config);
+        } catch (Exception e) {
+            throw new MojoFailureException("Failed to render clients", e);
         }
     }
 
