@@ -150,6 +150,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         boolean isDirectory = !isFile;
 
         if (configurations.size() == 1 && isFile) {
+            configurations.get(0).getClientGeneratorConfiguration().setName(target.getName());
             writeClient(target, callClientGenerator(clientGenerator.getClientGenerator(), configurations.get(0).clientGeneratorConfiguration));
         } else {
             if (isFile) {
@@ -158,14 +159,15 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
             }
 
             for (Configuration configuration : configurations) {
+                String name = configuration.getClientGeneratorConfiguration().getControllerClass().getSimpleName();
+                name = name.replace("Controller", "");
+                name = name.replace("Resource", "");
+                name = name + "Client";
+
+                configuration.getClientGeneratorConfiguration().setName(name);
                 String source = callClientGenerator(clientGenerator.getClientGenerator(), configuration.getClientGeneratorConfiguration());
                 File file;
                 if (isDirectory) {
-                    String name = configuration.getClientGeneratorConfiguration().getControllerClass().getSimpleName();
-                    name = name.replace("Controller", "");
-                    name = name.replace("Resource", "");
-                    name = name + "Client";
-
                     file = new File(target.getAbsolutePath() + File.separator + name + "." + clientGenerator.getFileEnding());
                 } else {
                     file = target;
@@ -180,7 +182,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         try {
             return clientGenerator.render(config);
         } catch (Exception e) {
-            throw new MojoFailureException("Failed to render clients", e);
+            throw new MojoFailureException("Failed to render clients: " + e.getMessage(), e);
         }
     }
 

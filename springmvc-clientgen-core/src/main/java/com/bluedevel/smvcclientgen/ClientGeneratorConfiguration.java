@@ -7,8 +7,17 @@ import java.util.List;
  */
 public class ClientGeneratorConfiguration {
 
+    private String name;
     private Class<?> controllerClass;
     private List<ClientGeneratorControllerDecleration> controllerDeclarations;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public Class<?> getControllerClass() {
         return controllerClass;

@@ -3,13 +3,7 @@ package com.bluedevel.smvcclientgen.core;
 import com.bluedevel.smvcclientgen.ClientGenerator;
 import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
 import com.bluedevel.smvcclientgen.ClientGeneratorControllerDecleration;
-import org.antlr.stringtemplate.StringTemplate;
-import org.apache.commons.io.IOUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
-
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringWriter;
 
 /**
  * @author Robin Engel
@@ -17,26 +11,61 @@ import java.io.StringWriter;
 public class JavaScriptClientGenerator implements ClientGenerator {
 
     public String render(ClientGeneratorConfiguration config) throws Exception {
-        if (config.getControllerDeclarations().size() == 0) {
+        if (config.getControllerDeclarations() == null) {
             return "";
         }
 
-        ClientGeneratorControllerDecleration decleration = config.getControllerDeclarations().get(0);
+        String className = config.getControllerClass().getSimpleName();
 
-        StringWriter writer = new StringWriter();
-        InputStream inputStream = this.getClass().getResourceAsStream("templates/javascript.js.template");
-        InputStreamReader templateReader = new InputStreamReader(inputStream);
+        StringBuilder source = new StringBuilder();
+        source.append("var ")
+                .append(className)
+                .append("=")
+                .append(className).append(" || {};")
+                .append("\n");
 
-        IOUtils.copy(templateReader, writer);
+        for (ClientGeneratorControllerDecleration decleration : config.getControllerDeclarations()) {
+            if (decleration.getPath() == null || decleration.getPath().length == 0) {
+                continue;
+            }
 
-        StringTemplate template = new StringTemplate();
-        template.setTemplate(writer.toString());
+            if (decleration.getMethod() == null || decleration.getMethod().length == 0) {
+                decleration.setMethod(new RequestMethod[]{RequestMethod.GET});
+            }
 
-        template.setAttribute("path", decleration.getPath()[0]);
-        template.setAttribute("method",
-                decleration.getMethod().length > 0 ? decleration.getMethod()[0] : RequestMethod.GET);
+            for (RequestMethod requestMethod : decleration.getMethod()) {
+                String methodName = decleration.getControllerMethod().getName();
 
-        return template.toString();
+                // check weather implementing method name starts with http method
+                if (!methodName.toLowerCase().startsWith(requestMethod.name().toLowerCase())) {
+                    methodName = requestMethod.name().toLowerCase() + capitalizeFirstLetter(methodName);
+                }
+
+                source.append(className).append(".").append(methodName).append("=function(onLoad){")
+                        .append("var request = new XMLHttpRequest();")
+                        .append("request.open(")
+                        .append("'").append(requestMethod.name()).append("'")
+                        .append(",")
+                        .append("'").append(decleration.getPath()[0]).append("'").append(");");
+
+                source.append("request.addEventListener('load', onLoad);");
+                source.append("request.send();");
+
+                //close function
+                source.append("}");
+            }
+        }
+
+        return source.toString();
     }
 
+    private String capitalizeFirstLetter(String str) {
+        if (str.length() == 0) {
+            return "";
+        } else if (str.length() == 1) {
+            return str.toUpperCase();
+        }
+
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
 }
