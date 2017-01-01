@@ -119,6 +119,11 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
                     continue;
                 }
 
+                if (requestMapping.path().length > 1) {
+                    getLog().warn("Multiple paths are not supported! " +
+                            "The first one will be used on the client");
+                }
+
                 ClientGeneratorControllerDecleration decleration = new ClientGeneratorControllerDecleration();
                 decleration.setControllerMethod(method);
                 decleration.setName(requestMapping.name());
