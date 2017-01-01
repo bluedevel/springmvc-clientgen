@@ -32,6 +32,11 @@ public class JavaScriptClientGenerator implements ClientGenerator {
                 decleration.setMethod(new RequestMethod[]{RequestMethod.GET});
             }
 
+            String consumes = null;
+            if (decleration.getConsumes() != null && decleration.getConsumes().length > 0) {
+                consumes = decleration.getConsumes()[0];
+            }
+
             for (RequestMethod requestMethod : decleration.getMethod()) {
                 String methodName = decleration.getControllerMethod().getName();
 
@@ -46,6 +51,11 @@ public class JavaScriptClientGenerator implements ClientGenerator {
                         .append("'").append(requestMethod.name()).append("'")
                         .append(",")
                         .append("'").append(decleration.getPath()[0]).append("'").append(");");
+
+                if (consumes != null) {
+                    source.append("request.setRequestHeader('Content-Type','")
+                            .append(consumes).append("');");
+                }
 
                 source.append("request.addEventListener('load', onLoad);");
                 source.append("request.send();");

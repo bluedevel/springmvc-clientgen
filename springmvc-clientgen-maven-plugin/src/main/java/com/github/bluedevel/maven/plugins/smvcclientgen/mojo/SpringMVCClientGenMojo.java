@@ -124,6 +124,11 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
                             "The first one will be used on the client");
                 }
 
+                if (requestMapping.consumes().length > 1) {
+                    getLog().warn("Multiple consumes are not supported! " +
+                            "The first one will be used on the client");
+                }
+
                 ClientGeneratorControllerDecleration decleration = new ClientGeneratorControllerDecleration();
                 decleration.setControllerMethod(method);
                 decleration.setName(requestMapping.name());
