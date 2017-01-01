@@ -21,8 +21,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         source.append("var ")
                 .append(className)
                 .append("=")
-                .append(className).append(" || {};")
-                .append("\n");
+                .append(className).append(" || {};");
 
         for (ClientGeneratorControllerDecleration decleration : config.getControllerDeclarations()) {
             if (decleration.getPath() == null || decleration.getPath().length == 0) {
