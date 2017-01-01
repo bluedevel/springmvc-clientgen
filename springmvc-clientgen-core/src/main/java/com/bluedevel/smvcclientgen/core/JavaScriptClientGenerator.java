@@ -15,7 +15,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
             return "";
         }
 
-        String className = config.getControllerClass().getSimpleName();
+        String className = config.getName();
 
         StringBuilder source = new StringBuilder();
         source.append("var ")
