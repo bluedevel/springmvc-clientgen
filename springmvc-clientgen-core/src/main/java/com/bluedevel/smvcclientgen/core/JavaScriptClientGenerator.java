@@ -51,7 +51,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
                 source.append("request.send();");
 
                 //close function
-                source.append("}");
+                source.append("};");
             }
         }
 
