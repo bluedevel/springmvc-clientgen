@@ -2,7 +2,7 @@ package com.github.bluedevel.maven.plugins.smvcclientgen.mojo;
 
 import com.bluedevel.smvcclientgen.ClientGenerator;
 import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
-import com.bluedevel.smvcclientgen.ClientGeneratorControllerDecleration;
+import com.bluedevel.smvcclientgen.ClientGeneratorControllerDeclaration;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -118,7 +118,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
 
     private void loadClientGeneratorConfigurations(List<Configuration> configs) {
         for (Configuration config : configs) {
-            List<ClientGeneratorControllerDecleration> declarations = new ArrayList<>();
+            List<ClientGeneratorControllerDeclaration> declarations = new ArrayList<>();
             for (Method method : config.getClientGeneratorConfiguration().getControllerClass().getMethods()) {
                 RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
 
@@ -136,7 +136,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
                             "The first one will be used on the client");
                 }
 
-                ClientGeneratorControllerDecleration decleration = new ClientGeneratorControllerDecleration();
+                ClientGeneratorControllerDeclaration decleration = new ClientGeneratorControllerDeclaration();
                 decleration.setControllerMethod(method);
                 decleration.setName(requestMapping.name());
                 decleration.setPath(requestMapping.path().length > 0 ?

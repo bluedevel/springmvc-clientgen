@@ -9,7 +9,7 @@ public class ClientGeneratorConfiguration {
 
     private String name;
     private Class<?> controllerClass;
-    private List<ClientGeneratorControllerDecleration> controllerDeclarations;
+    private List<ClientGeneratorControllerDeclaration> controllerDeclarations;
 
     public String getName() {
         return name;
@@ -27,11 +27,11 @@ public class ClientGeneratorConfiguration {
         this.controllerClass = controllerClass;
     }
 
-    public List<ClientGeneratorControllerDecleration> getControllerDeclarations() {
+    public List<ClientGeneratorControllerDeclaration> getControllerDeclarations() {
         return controllerDeclarations;
     }
 
-    public void setControllerDeclarations(List<ClientGeneratorControllerDecleration> controllerDeclarations) {
+    public void setControllerDeclarations(List<ClientGeneratorControllerDeclaration> controllerDeclarations) {
         this.controllerDeclarations = controllerDeclarations;
     }
 }

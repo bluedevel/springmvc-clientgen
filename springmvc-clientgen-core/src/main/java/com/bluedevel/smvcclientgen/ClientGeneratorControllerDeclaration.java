@@ -7,7 +7,7 @@ import java.lang.reflect.Method;
 /**
  * @author Robin Engel
  */
-public class ClientGeneratorControllerDecleration {
+public class ClientGeneratorControllerDeclaration {
 
     private Method controllerMethod;
     private String name;
@@ -18,10 +18,10 @@ public class ClientGeneratorControllerDecleration {
     private String[] consumes;
     private String[] produces;
 
-    public ClientGeneratorControllerDecleration() {
+    public ClientGeneratorControllerDeclaration() {
     }
 
-    public ClientGeneratorControllerDecleration(Method controllerMethod, String name, String[] path, RequestMethod[] method, String[] params, String[] headers, String[] consumes, String[] produces) {
+    public ClientGeneratorControllerDeclaration(Method controllerMethod, String name, String[] path, RequestMethod[] method, String[] params, String[] headers, String[] consumes, String[] produces) {
         this.controllerMethod = controllerMethod;
         this.name = name;
         this.path = path;

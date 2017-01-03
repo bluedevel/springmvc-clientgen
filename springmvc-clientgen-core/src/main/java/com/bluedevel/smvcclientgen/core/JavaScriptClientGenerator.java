@@ -2,7 +2,7 @@ package com.bluedevel.smvcclientgen.core;
 
 import com.bluedevel.smvcclientgen.ClientGenerator;
 import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
-import com.bluedevel.smvcclientgen.ClientGeneratorControllerDecleration;
+import com.bluedevel.smvcclientgen.ClientGeneratorControllerDeclaration;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
@@ -23,7 +23,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
                 .append("=")
                 .append(className).append(" || {};");
 
-        for (ClientGeneratorControllerDecleration decleration : config.getControllerDeclarations()) {
+        for (ClientGeneratorControllerDeclaration decleration : config.getControllerDeclarations()) {
             if (decleration.getPath() == null || decleration.getPath().length == 0) {
                 continue;
             }
