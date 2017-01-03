@@ -74,6 +74,10 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         renderClients(configs);
     }
 
+    /**
+     * All client generators are configured here.
+     * Custom generators are not supported yet.
+     */
     private void configureGeneratorFactory(ClassLoader classLoader) throws MojoFailureException {
         generatorFactory.reset();
         generatorFactory.registerDefaultGenerators();
@@ -86,6 +90,9 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         }
     }
 
+    /**
+     * Instantiate configuration model for the user specified controller classes
+     */
     private List<Configuration> loadClassesToScan(URLClassLoader classLoader) throws MojoFailureException {
         List<Configuration> configs = new ArrayList<>();
         for (Controller controller : controllers) {
