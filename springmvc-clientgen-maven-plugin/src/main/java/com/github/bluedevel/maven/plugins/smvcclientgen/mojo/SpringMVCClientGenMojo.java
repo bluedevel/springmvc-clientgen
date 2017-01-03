@@ -4,6 +4,7 @@ import com.bluedevel.smvcclientgen.ClientGenerator;
 import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
 import com.bluedevel.smvcclientgen.ClientGeneratorControllerDeclaration;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -22,7 +23,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Robin Engel
@@ -56,22 +59,30 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
             return;
         }
 
-        File outputDirectory = new File(project.getBuild().getOutputDirectory());
-        URL outputURL;
-        try {
-            outputURL = outputDirectory.toURI().toURL();
-        } catch (MalformedURLException e) {
-            throw new MojoExecutionException("Failed to find output folder", e);
-        }
-
-        ClassLoader parentClassLoader = this.getClass().getClassLoader();
-        URLClassLoader classLoader = new URLClassLoader(new URL[]{outputURL}, parentClassLoader);
+        URLClassLoader classLoader = new URLClassLoader(
+                new URL[]{getOutputUrl()},
+                this.getClass().getClassLoader());
 
         configureGeneratorFactory(classLoader);
 
-        List<Configuration> configs = loadClassesToScan(classLoader);
-        loadClientGeneratorConfigurations(configs);
-        renderClients(configs);
+        Map<String, Class<?>> controllerClasses = loadControllers(classLoader);
+        Map<String, ClientGeneratorFactory.ClientGenerator> generators = loadGenerators();
+        List<ClientGeneratorConfiguration> configurations = loadConfigurations(controllerClasses);
+
+        for (ClientGeneratorConfiguration configuration : configurations) {
+            loadDeclarations(configuration);
+        }
+
+        renderClients(configurations, generators);
+    }
+
+    private URL getOutputUrl() throws MojoExecutionException {
+        File outputDirectory = new File(project.getBuild().getOutputDirectory());
+        try {
+            return outputDirectory.toURI().toURL();
+        } catch (MalformedURLException e) {
+            throw new MojoExecutionException("Failed to find output folder", e);
+        }
     }
 
     /**
@@ -82,7 +93,6 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         generatorFactory.reset();
         generatorFactory.registerDefaultGenerators();
 
-        generatorFactory.setClassLoader(classLoader);
         try {
             generatorFactory.registerGenerators(generators);
         } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
@@ -91,101 +101,127 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
     }
 
     /**
-     * Instantiate configuration model for the user specified controller classes
+     * Load the user specified controller classes mapped by the class name
      */
-    private List<Configuration> loadClassesToScan(URLClassLoader classLoader) throws MojoFailureException {
-        List<Configuration> configs = new ArrayList<>();
-        for (Controller controller : controllers) {
-            Class<?> clazz;
+    private Map<String, Class<?>> loadControllers(ClassLoader classLoader) throws MojoFailureException {
+        Map<String, Class<?>> result = new HashMap<>();
+        for (Controller controllerConfiguration : controllers) {
             try {
-                clazz = classLoader.loadClass(controller.getImplementation());
+                Class<?> clazz = classLoader.loadClass(controllerConfiguration.getImplementation());
+                result.put(controllerConfiguration.getImplementation(), clazz);
             } catch (ClassNotFoundException e) {
                 throw new MojoFailureException("Could not scan class", e);
             }
+        }
+        return result;
+    }
 
-            if (clazz.isAnnotationPresent(org.springframework.stereotype.Controller.class)
-                    || clazz.isAnnotationPresent(RestController.class)) {
-                Configuration config = new Configuration();
-                ClientGeneratorConfiguration clientGeneratorConfiguration = new ClientGeneratorConfiguration();
-                clientGeneratorConfiguration.setControllerClass(clazz);
-                config.setControllerConfig(controller);
-                config.setClientGeneratorConfiguration(clientGeneratorConfiguration);
-                configs.add(config);
+    private Map<String, ClientGeneratorFactory.ClientGenerator> loadGenerators() {
+        Map<String, ClientGeneratorFactory.ClientGenerator> result = new HashMap<>();
+        for (Controller config : controllers) {
+            String generatorName = StringUtils.defaultIfEmpty(config.getGenerator(), generator);
+            ClientGeneratorFactory.ClientGenerator generator = generatorFactory.getClientGenerator(generatorName);
+            result.put(config.getImplementation(), generator);
+        }
+        return result;
+    }
+
+    private List<ClientGeneratorConfiguration> loadConfigurations(Map<String, Class<?>> controllersClasses) {
+        List<ClientGeneratorConfiguration> configs = new ArrayList<>();
+        for (Controller controllerConfiguration : controllers) {
+            if (!controllersClasses.containsKey(controllerConfiguration.getImplementation())) {
+                continue;
             }
+
+            Class<?> clazz = controllersClasses.get(controllerConfiguration.getImplementation());
+
+            // continue if class isn't an actual controller
+            if (!(clazz.isAnnotationPresent(org.springframework.stereotype.Controller.class)
+                    || clazz.isAnnotationPresent(RestController.class))) {
+                getLog().warn("Class " + clazz.getName() + " is not an actual controller! " +
+                        "Class must be annotated with " + org.springframework.stereotype.Controller.class.getName() +
+                        " or " + RestController.class.getName());
+                continue;
+            }
+
+            ClientGeneratorConfiguration config = new ClientGeneratorConfiguration();
+            config.setControllerClass(clazz);
+            config.setName(getControllerName(clazz));
+            configs.add(config);
         }
         return configs;
     }
 
-    private void loadClientGeneratorConfigurations(List<Configuration> configs) {
-        for (Configuration config : configs) {
-            List<ClientGeneratorControllerDeclaration> declarations = new ArrayList<>();
-            for (Method method : config.getClientGeneratorConfiguration().getControllerClass().getMethods()) {
-                RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
-
-                if (requestMapping == null) {
-                    continue;
-                }
-
-                if (requestMapping.path().length > 1) {
-                    getLog().warn("Multiple paths are not supported! " +
-                            "The first one will be used on the client");
-                }
-
-                if (requestMapping.consumes().length > 1) {
-                    getLog().warn("Multiple consumes are not supported! " +
-                            "The first one will be used on the client");
-                }
-
-                ClientGeneratorControllerDeclaration decleration = new ClientGeneratorControllerDeclaration();
-                decleration.setControllerMethod(method);
-                decleration.setName(requestMapping.name());
-                decleration.setPath(requestMapping.path().length > 0 ?
-                        requestMapping.path() : requestMapping.value());
-                decleration.setMethod(requestMapping.method());
-                decleration.setHeaders(requestMapping.headers());
-                decleration.setParams(requestMapping.params());
-                decleration.setConsumes(requestMapping.consumes());
-                decleration.setProduces(requestMapping.produces());
-                declarations.add(decleration);
-            }
-            config.getClientGeneratorConfiguration().setControllerDeclarations(declarations);
-        }
+    private String getControllerName(Class<?> clazz) {
+        String name = clazz.getSimpleName();
+        name = name.replace("Controller", "");
+        name = name.replace("Resource", "");
+        name = name + "Client";
+        return name;
     }
 
-    private void renderClients(List<Configuration> configurations) throws MojoFailureException, MojoExecutionException {
-        if (configurations.size() == 0) {
-            return;
+    private void loadDeclarations(ClientGeneratorConfiguration configuration) {
+        List<ClientGeneratorControllerDeclaration> declarations = new ArrayList<>();
+        for (Method method : configuration.getControllerClass().getMethods()) {
+            RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
+
+            if (requestMapping == null) {
+                continue;
+            }
+
+            if (requestMapping.path().length > 1) {
+                getLog().warn("Multiple paths are not supported! " +
+                        "The first one will be used on the client");
+            }
+
+            if (requestMapping.consumes().length > 1) {
+                getLog().warn("Multiple consumes are not supported! " +
+                        "The first one will be used on the client");
+            }
+
+            ClientGeneratorControllerDeclaration decleration = new ClientGeneratorControllerDeclaration();
+            decleration.setControllerMethod(method);
+            decleration.setName(requestMapping.name());
+            decleration.setPath(requestMapping.path().length > 0 ?
+                    requestMapping.path() : requestMapping.value());
+            decleration.setMethod(requestMapping.method());
+            decleration.setHeaders(requestMapping.headers());
+            decleration.setParams(requestMapping.params());
+            decleration.setConsumes(requestMapping.consumes());
+            decleration.setProduces(requestMapping.produces());
+            declarations.add(decleration);
         }
+        configuration.setControllerDeclarations(declarations);
+    }
 
-        ClientGeneratorFactory.ClientGeneratorWrapper clientGenerator = generatorFactory.getClientGenerator(generator);
-
-        if (clientGenerator == null) {
-            throw new MojoExecutionException("No generator with name " + generator + " configured");
-        }
-
+    private void renderClients(List<ClientGeneratorConfiguration> configurations, Map<String, ClientGeneratorFactory.ClientGenerator> generators) throws MojoFailureException {
         boolean isFile = target.isFile() || target.getName().contains(".");
         boolean isDirectory = !isFile;
 
         if (configurations.size() == 1 && isFile) {
-            configurations.get(0).getClientGeneratorConfiguration().setName(target.getName());
-            writeClient(target, callClientGenerator(clientGenerator.getClientGenerator(), configurations.get(0).clientGeneratorConfiguration));
+            ClientGeneratorConfiguration config = configurations.get(0);
+            ClientGenerator generator = generators.get(config.getControllerClass().getName());
+            writeClient(target, callClientGenerator(generator, config));
         } else {
             if (isFile) {
                 getLog().warn("A specific file is specified to write clients to but multiple " +
-                        "controllers are found. All generated clients will be overwritten by the next one!");
+                        "controllers are found. " +
+                        "All generated clients will be overwritten by the next one!");
             }
 
-            for (Configuration configuration : configurations) {
-                String name = configuration.getClientGeneratorConfiguration().getControllerClass().getSimpleName();
-                name = name.replace("Controller", "");
-                name = name.replace("Resource", "");
-                name = name + "Client";
+            for (ClientGeneratorConfiguration config : configurations) {
+                ClientGeneratorFactory.ClientGenerator generator =
+                        generators.get(config.getControllerClass().getName());
 
-                configuration.getClientGeneratorConfiguration().setName(name);
-                String source = callClientGenerator(clientGenerator.getClientGenerator(), configuration.getClientGeneratorConfiguration());
+                String source = callClientGenerator(generator, config);
+
                 File file;
                 if (isDirectory) {
-                    file = new File(target.getAbsolutePath() + File.separator + name + "." + clientGenerator.getFileEnding());
+                    file = new File(target.getAbsolutePath() +
+                            File.separator +
+                            config.getName() +
+                            "." +
+                            generator.getFileEnding());
                 } else {
                     file = target;
                 }
@@ -226,36 +262,5 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         printer.print(source);
         printer.flush();
         printer.close();
-    }
-
-    private static class Configuration {
-
-        private Controller controllerConfig;
-        private ClientGeneratorFactory.ClientGeneratorWrapper clientGeneratorWrapper;
-        private ClientGeneratorConfiguration clientGeneratorConfiguration;
-
-        public Controller getControllerConfig() {
-            return controllerConfig;
-        }
-
-        public void setControllerConfig(Controller controllerConfig) {
-            this.controllerConfig = controllerConfig;
-        }
-
-        public ClientGeneratorFactory.ClientGeneratorWrapper getClientGeneratorWrapper() {
-            return clientGeneratorWrapper;
-        }
-
-        public void setClientGeneratorWrapper(ClientGeneratorFactory.ClientGeneratorWrapper clientGeneratorWrapper) {
-            this.clientGeneratorWrapper = clientGeneratorWrapper;
-        }
-
-        public ClientGeneratorConfiguration getClientGeneratorConfiguration() {
-            return clientGeneratorConfiguration;
-        }
-
-        public void setClientGeneratorConfiguration(ClientGeneratorConfiguration clientGeneratorConfiguration) {
-            this.clientGeneratorConfiguration = clientGeneratorConfiguration;
-        }
     }
 }

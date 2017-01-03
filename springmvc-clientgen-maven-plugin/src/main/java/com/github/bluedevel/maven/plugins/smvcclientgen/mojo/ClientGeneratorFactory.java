@@ -1,6 +1,6 @@
 package com.github.bluedevel.maven.plugins.smvcclientgen.mojo;
 
-import com.bluedevel.smvcclientgen.ClientGenerator;
+import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
 import com.bluedevel.smvcclientgen.core.JavaScriptClientGenerator;
 import org.apache.commons.lang3.NotImplementedException;
 
@@ -12,16 +12,14 @@ import java.util.Map;
  */
 public class ClientGeneratorFactory {
 
-    private Map<String, ClientGeneratorWrapper> generators;
-    private ClassLoader classLoader;
+    private Map<String, ClientGenerator> generators;
 
     public ClientGeneratorFactory() {
         reset();
-        classLoader = System.class.getClassLoader();
     }
 
-    public ClientGeneratorWrapper getClientGenerator(String generatorName) {
-        ClientGeneratorWrapper generator = generators.get(generatorName);
+    public ClientGenerator getClientGenerator(String generatorName) {
+        ClientGenerator generator = generators.get(generatorName);
 
         if (generator == null) {
             throw new IllegalArgumentException("Unknown generator " + generatorName);
@@ -41,44 +39,30 @@ public class ClientGeneratorFactory {
     }
 
     public void registerDefaultGenerators() {
-        generators.put("javascript", new ClientGeneratorWrapper(new JavaScriptClientGenerator(), "js"));
+        generators.put("javascript", new ClientGenerator(new JavaScriptClientGenerator(), "js"));
     }
 
     public void reset() {
-        generators = new HashMap<String, ClientGeneratorWrapper>();
+        generators = new HashMap<String, ClientGenerator>();
     }
 
-    public void setClassLoader(ClassLoader classLoader) {
-        this.classLoader = classLoader;
-    }
+    public static class ClientGenerator implements com.bluedevel.smvcclientgen.ClientGenerator {
 
-    public static class ClientGeneratorWrapper {
-
-        private ClientGenerator clientGenerator;
+        private com.bluedevel.smvcclientgen.ClientGenerator clientGenerator;
         private String fileEnding;
 
-        public ClientGeneratorWrapper() {
-        }
-
-        public ClientGeneratorWrapper(ClientGenerator clientGenerator, String fileEnding) {
+        private ClientGenerator(com.bluedevel.smvcclientgen.ClientGenerator clientGenerator, String fileEnding) {
             this.clientGenerator = clientGenerator;
             this.fileEnding = fileEnding;
-        }
-
-        public ClientGenerator getClientGenerator() {
-            return clientGenerator;
-        }
-
-        public void setClientGenerator(ClientGenerator clientGenerator) {
-            this.clientGenerator = clientGenerator;
         }
 
         public String getFileEnding() {
             return fileEnding;
         }
 
-        public void setFileEnding(String fileEnding) {
-            this.fileEnding = fileEnding;
+        @Override
+        public String render(ClientGeneratorConfiguration config) throws Exception {
+            return clientGenerator.render(config);
         }
     }
 }

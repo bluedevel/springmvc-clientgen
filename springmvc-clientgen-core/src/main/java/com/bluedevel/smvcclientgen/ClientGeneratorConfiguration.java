@@ -1,5 +1,6 @@
 package com.bluedevel.smvcclientgen;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -10,6 +11,10 @@ public class ClientGeneratorConfiguration {
     private String name;
     private Class<?> controllerClass;
     private List<ClientGeneratorControllerDeclaration> controllerDeclarations;
+
+    public ClientGeneratorConfiguration() {
+        controllerDeclarations = new ArrayList<>();
+    }
 
     public String getName() {
         return name;
