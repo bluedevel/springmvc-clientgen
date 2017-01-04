@@ -4,6 +4,7 @@ import com.bluedevel.smvcclientgen.ClientGenerator;
 import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
 import com.bluedevel.smvcclientgen.ClientGeneratorControllerDeclaration;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -48,6 +49,9 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
     @Parameter
     private File target;
 
+    @Parameter
+    private URL baseUrl;
+
     private ClientGeneratorFactory generatorFactory;
 
     public SpringMVCClientGenMojo() {
@@ -66,7 +70,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         configureGeneratorFactory(classLoader);
 
         Map<String, Class<?>> controllerClasses = loadControllers(classLoader);
-        Map<String, ClientGeneratorFactory.ClientGenerator> generators = loadGenerators();
+        Map<Class<?>, ClientGeneratorFactory.ClientGenerator> generators = loadGenerators(controllerClasses);
         List<ClientGeneratorConfiguration> configurations = loadConfigurations(controllerClasses);
 
         for (ClientGeneratorConfiguration configuration : configurations) {
@@ -116,12 +120,12 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         return result;
     }
 
-    private Map<String, ClientGeneratorFactory.ClientGenerator> loadGenerators() {
-        Map<String, ClientGeneratorFactory.ClientGenerator> result = new HashMap<>();
+    private Map<Class<?>, ClientGeneratorFactory.ClientGenerator> loadGenerators(Map<String, Class<?>> controllerClasses) {
+        Map<Class<?>, ClientGeneratorFactory.ClientGenerator> result = new HashMap<>();
         for (Controller config : controllers) {
             String generatorName = StringUtils.defaultIfEmpty(config.getGenerator(), generator);
             ClientGeneratorFactory.ClientGenerator generator = generatorFactory.getClientGenerator(generatorName);
-            result.put(config.getImplementation(), generator);
+            result.put(controllerClasses.get(config.getImplementation()), generator);
         }
         return result;
     }
@@ -147,6 +151,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
             ClientGeneratorConfiguration config = new ClientGeneratorConfiguration();
             config.setControllerClass(clazz);
             config.setName(getControllerName(clazz));
+            config.setBaseURL(ObjectUtils.defaultIfNull(controllerConfiguration.getBaseUrl(), baseUrl));
             configs.add(config);
         }
         return configs;
@@ -194,13 +199,15 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         configuration.setControllerDeclarations(declarations);
     }
 
-    private void renderClients(List<ClientGeneratorConfiguration> configurations, Map<String, ClientGeneratorFactory.ClientGenerator> generators) throws MojoFailureException {
+    private void renderClients(List<ClientGeneratorConfiguration> configurations,
+                               Map<Class<?>, ClientGeneratorFactory.ClientGenerator> generators)
+            throws MojoFailureException {
         boolean isFile = target.isFile() || target.getName().contains(".");
         boolean isDirectory = !isFile;
 
         if (configurations.size() == 1 && isFile) {
             ClientGeneratorConfiguration config = configurations.get(0);
-            ClientGenerator generator = generators.get(config.getControllerClass().getName());
+            ClientGenerator generator = generators.get(config.getControllerClass());
             writeClient(target, callClientGenerator(generator, config));
         } else {
             if (isFile) {
@@ -211,7 +218,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
 
             for (ClientGeneratorConfiguration config : configurations) {
                 ClientGeneratorFactory.ClientGenerator generator =
-                        generators.get(config.getControllerClass().getName());
+                        generators.get(config.getControllerClass());
 
                 String source = callClientGenerator(generator, config);
 

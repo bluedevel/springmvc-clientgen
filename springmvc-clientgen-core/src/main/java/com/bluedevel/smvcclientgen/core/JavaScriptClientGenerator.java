@@ -16,6 +16,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         }
 
         String className = config.getName();
+        String baseUrl = config.getBaseURL() != null ? config.getBaseURL().toString() : "";
 
         StringBuilder source = new StringBuilder();
         source.append("var ")
@@ -50,7 +51,8 @@ public class JavaScriptClientGenerator implements ClientGenerator {
                         .append("request.open(")
                         .append("'").append(requestMethod.name()).append("'")
                         .append(",")
-                        .append("'").append(decleration.getPath()[0]).append("'").append(");");
+                        .append("'").append(baseUrl).append(decleration.getPath()[0]).append("'")
+                        .append(");");
 
                 if (consumes != null) {
                     source.append("request.setRequestHeader('Content-Type','")

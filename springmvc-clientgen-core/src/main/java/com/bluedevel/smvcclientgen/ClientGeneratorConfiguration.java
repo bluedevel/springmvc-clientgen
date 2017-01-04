@@ -1,5 +1,6 @@
 package com.bluedevel.smvcclientgen;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,6 +10,7 @@ import java.util.List;
 public class ClientGeneratorConfiguration {
 
     private String name;
+    private URL baseURL;
     private Class<?> controllerClass;
     private List<ClientGeneratorControllerDeclaration> controllerDeclarations;
 
@@ -22,6 +24,14 @@ public class ClientGeneratorConfiguration {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public URL getBaseURL() {
+        return baseURL;
+    }
+
+    public void setBaseURL(URL baseURL) {
+        this.baseURL = baseURL;
     }
 
     public Class<?> getControllerClass() {

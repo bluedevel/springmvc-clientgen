@@ -41,6 +41,7 @@
                 <configuration>
                     <controllers>
                         <controller>
+                            <baseUrl>http://bla.de</baseUrl>
                             <implementation>springmvcclientgen.test.ExampleController</implementation>
                         </controller>
                     </controllers>
