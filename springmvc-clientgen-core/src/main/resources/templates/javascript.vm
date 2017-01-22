@@ -1,0 +1,15 @@
+var $className = $className || {}
+
+#foreach($function in $functions)
+    $className.$function.getName()=function(onLoad){
+        var request = new XMLHttpRequest();
+        request.open('$function.getMethod()=', '$function.getUrl()');
+
+        #if($function.getConsumes() != "")
+            request.setRequestHeader('Content-Type','$function.getConsumes()');
+        #end
+
+        request.addEventListener('load', onLoad);
+        request.send();
+}
+#end

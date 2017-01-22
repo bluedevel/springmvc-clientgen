@@ -3,7 +3,16 @@ package com.bluedevel.smvcclientgen.core;
 import com.bluedevel.smvcclientgen.ClientGenerator;
 import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
 import com.bluedevel.smvcclientgen.ClientGeneratorControllerDeclaration;
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.runtime.RuntimeConstants;
+import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.springframework.web.bind.annotation.RequestMethod;
+
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Robin Engel
@@ -15,59 +24,57 @@ public class JavaScriptClientGenerator implements ClientGenerator {
             return "";
         }
 
-        String className = config.getName();
-        String baseUrl = config.getBaseURL() != null ? config.getBaseURL().toString() : "";
+        VelocityEngine ve = new VelocityEngine();
+        ve.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
+        ve.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
+        ve.init();
 
-        StringBuilder source = new StringBuilder();
-        source.append("var ")
-                .append(className)
-                .append("=")
-                .append(className).append(" || {};");
+        Template template = ve.getTemplate("templates/javascript.vm", "UTF-8");
 
-        for (ClientGeneratorControllerDeclaration decleration : config.getControllerDeclarations()) {
-            if (decleration.getPath() == null || decleration.getPath().length == 0) {
+        List<FunctionConfig> functions = new ArrayList<>();
+        for (ClientGeneratorControllerDeclaration declaration : config.getControllerDeclarations()) {
+            if (declaration.getPath() == null || declaration.getPath().length == 0) {
                 continue;
             }
 
-            if (decleration.getMethod() == null || decleration.getMethod().length == 0) {
-                decleration.setMethod(new RequestMethod[]{RequestMethod.GET});
+            if (declaration.getMethod() == null || declaration.getMethod().length == 0) {
+                declaration.setMethod(new RequestMethod[]{RequestMethod.GET});
             }
 
             String consumes = null;
-            if (decleration.getConsumes() != null && decleration.getConsumes().length > 0) {
-                consumes = decleration.getConsumes()[0];
+            if (declaration.getConsumes() != null && declaration.getConsumes().length > 0) {
+                consumes = declaration.getConsumes()[0];
             }
 
-            for (RequestMethod requestMethod : decleration.getMethod()) {
-                String methodName = decleration.getControllerMethod().getName();
+            for (RequestMethod requestMethod : declaration.getMethod()) {
+                String methodName = declaration.getControllerMethod().getName();
 
                 // check weather implementing method name starts with http method
                 if (!methodName.toLowerCase().startsWith(requestMethod.name().toLowerCase())) {
                     methodName = requestMethod.name().toLowerCase() + capitalizeFirstLetter(methodName);
                 }
 
-                source.append(className).append(".").append(methodName).append("=function(onLoad){")
-                        .append("var request = new XMLHttpRequest();")
-                        .append("request.open(")
-                        .append("'").append(requestMethod.name()).append("'")
-                        .append(",")
-                        .append("'").append(baseUrl).append(decleration.getPath()[0]).append("'")
-                        .append(");");
+                FunctionConfig function = new FunctionConfig();
+                function.name = methodName;
+                function.method = requestMethod.name();
+                function.url = config.getBaseURL().toString() + declaration.getPath()[0];
+                function.consumes = consumes;
 
-                if (consumes != null) {
-                    source.append("request.setRequestHeader('Content-Type','")
-                            .append(consumes).append("');");
-                }
-
-                source.append("request.addEventListener('load', onLoad);");
-                source.append("request.send();");
-
-                //close function
-                source.append("};");
+                functions.add(function);
             }
         }
 
-        return source.toString();
+        String className = config.getName();
+        String baseUrl = config.getBaseURL() != null ? config.getBaseURL().toString() : "";
+
+        VelocityContext context = new VelocityContext();
+        context.put("className", className);
+        context.put("baseUrl", baseUrl);
+        context.put("functions", functions);
+
+        StringWriter writer = new StringWriter();
+        template.merge(context, writer);
+        return writer.toString();
     }
 
     private String capitalizeFirstLetter(String str) {
@@ -78,5 +85,28 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         }
 
         return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
+
+    private static class FunctionConfig {
+        private String name;
+        private String method;
+        private String url;
+        private String consumes;
+
+        public String getName() {
+            return name;
+        }
+
+        public String getMethod() {
+            return method;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public String getConsumes() {
+            return consumes;
+        }
     }
 }
