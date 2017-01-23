@@ -87,7 +87,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
-    private static class FunctionConfig {
+    public static class FunctionConfig {
         private String name;
         private String method;
         private String url;
