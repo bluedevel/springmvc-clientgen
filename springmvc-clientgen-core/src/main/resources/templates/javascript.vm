@@ -1,7 +1,7 @@
 var $className = $className || {}
 
 #foreach($function in $functions)
-    $className.$function.getName()=function(onLoad){
+    $className.$!function.getName()=function(onLoad){
         var request = new XMLHttpRequest();
         request.open('$function.getMethod()=', '$function.getUrl()');
 

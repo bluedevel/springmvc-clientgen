@@ -44,6 +44,11 @@
                             <baseUrl>http://bla.de</baseUrl>
                             <implementation>springmvcclientgen.test.ExampleController</implementation>
                         </controller>
+                        <controller>
+                            <baseUrl>http://bla2.de</baseUrl>
+                            <implementation>springmvcclientgen.test.ExampleController</implementation>
+                            <generator>jquery</generator>
+                        </controller>
                     </controllers>
                     <!-- Default Generator -->
                     <generator>javascript</generator>

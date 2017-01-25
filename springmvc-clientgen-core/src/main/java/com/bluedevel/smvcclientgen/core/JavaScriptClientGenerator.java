@@ -19,6 +19,16 @@ import java.util.List;
  */
 public class JavaScriptClientGenerator implements ClientGenerator {
 
+    private String templateName;
+
+    public JavaScriptClientGenerator() {
+        this("javascript");
+    }
+
+    public JavaScriptClientGenerator(String templateName) {
+        this.templateName = templateName;
+    }
+
     public String render(ClientGeneratorConfiguration config) throws Exception {
         if (config.getControllerDeclarations() == null) {
             return "";
@@ -29,7 +39,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         ve.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
         ve.init();
 
-        Template template = ve.getTemplate("templates/javascript.vm", "UTF-8");
+        Template template = ve.getTemplate("templates/" + templateName + ".vm", "UTF-8");
 
         List<FunctionConfig> functions = new ArrayList<>();
         for (ClientGeneratorControllerDeclaration declaration : config.getControllerDeclarations()) {

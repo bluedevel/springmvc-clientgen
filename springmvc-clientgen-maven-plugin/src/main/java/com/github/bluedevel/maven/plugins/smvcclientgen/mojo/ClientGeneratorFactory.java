@@ -39,7 +39,10 @@ public class ClientGeneratorFactory {
     }
 
     public void registerDefaultGenerators() {
-        generators.put("javascript", new ClientGenerator(new JavaScriptClientGenerator(), "js"));
+        generators.put("javascript",
+                new ClientGenerator(new JavaScriptClientGenerator("javascript"), "js"));
+        generators.put("jquery",
+                new ClientGenerator(new JavaScriptClientGenerator("jquery"), "js"));
     }
 
     public void reset() {
