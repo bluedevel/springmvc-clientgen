@@ -7,9 +7,18 @@ import java.net.URL;
  */
 public class Controller {
 
+    private String name;
     private String implementation;
     private String generator;
     private URL baseUrl;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public String getImplementation() {
         return implementation;

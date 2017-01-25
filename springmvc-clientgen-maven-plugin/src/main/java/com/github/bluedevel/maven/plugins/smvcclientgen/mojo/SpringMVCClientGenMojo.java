@@ -69,8 +69,9 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
 
         configureGeneratorFactory(classLoader);
 
-        Map<String, Class<?>> controllerClasses = loadControllers(classLoader);
-        Map<Class<?>, ClientGeneratorFactory.ClientGenerator> generators = loadGenerators(controllerClasses);
+        Map<String, Class<?>> controllerClasses = loadControllerClasses(classLoader);
+        loadControllerNames(controllerClasses);
+        Map<String, ClientGeneratorFactory.ClientGenerator> generators = loadGenerators();
         List<ClientGeneratorConfiguration> configurations = loadConfigurations(controllerClasses);
 
         for (ClientGeneratorConfiguration configuration : configurations) {
@@ -104,10 +105,27 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         }
     }
 
+    private void loadControllerNames(Map<String, Class<?>> controllerClasses) {
+        for (Controller controller : controllers) {
+            Class<?> controllerClass = controllerClasses.get(controller.getImplementation());
+            String name = StringUtils.defaultIfEmpty(
+                    controller.getName(), getControllerName(controllerClass));
+            controller.setName(name);
+        }
+    }
+
+    private String getControllerName(Class<?> clazz) {
+        String name = clazz.getSimpleName();
+        name = name.replace("Controller", "");
+        name = name.replace("Resource", "");
+        name = name + "Client";
+        return name;
+    }
+
     /**
      * Load the user specified controller classes mapped by the class name
      */
-    private Map<String, Class<?>> loadControllers(ClassLoader classLoader) throws MojoFailureException {
+    private Map<String, Class<?>> loadControllerClasses(ClassLoader classLoader) throws MojoFailureException {
         Map<String, Class<?>> result = new HashMap<>();
         for (Controller controllerConfiguration : controllers) {
             try {
@@ -120,12 +138,12 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         return result;
     }
 
-    private Map<Class<?>, ClientGeneratorFactory.ClientGenerator> loadGenerators(Map<String, Class<?>> controllerClasses) {
-        Map<Class<?>, ClientGeneratorFactory.ClientGenerator> result = new HashMap<>();
+    private Map<String, ClientGeneratorFactory.ClientGenerator> loadGenerators() {
+        Map<String, ClientGeneratorFactory.ClientGenerator> result = new HashMap<>();
         for (Controller config : controllers) {
             String generatorName = StringUtils.defaultIfEmpty(config.getGenerator(), generator);
             ClientGeneratorFactory.ClientGenerator generator = generatorFactory.getClientGenerator(generatorName);
-            result.put(controllerClasses.get(config.getImplementation()), generator);
+            result.put(config.getName(), generator);
         }
         return result;
     }
@@ -150,19 +168,11 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
 
             ClientGeneratorConfiguration config = new ClientGeneratorConfiguration();
             config.setControllerClass(clazz);
-            config.setName(getControllerName(clazz));
+            config.setName(controllerConfiguration.getName());
             config.setBaseURL(ObjectUtils.defaultIfNull(controllerConfiguration.getBaseUrl(), baseUrl));
             configs.add(config);
         }
         return configs;
-    }
-
-    private String getControllerName(Class<?> clazz) {
-        String name = clazz.getSimpleName();
-        name = name.replace("Controller", "");
-        name = name.replace("Resource", "");
-        name = name + "Client";
-        return name;
     }
 
     private void loadDeclarations(ClientGeneratorConfiguration configuration) {
@@ -200,14 +210,14 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
     }
 
     private void renderClients(List<ClientGeneratorConfiguration> configurations,
-                               Map<Class<?>, ClientGeneratorFactory.ClientGenerator> generators)
+                               Map<String, ClientGeneratorFactory.ClientGenerator> generators)
             throws MojoFailureException {
         boolean isFile = target.isFile() || target.getName().contains(".");
         boolean isDirectory = !isFile;
 
         if (configurations.size() == 1 && isFile) {
             ClientGeneratorConfiguration config = configurations.get(0);
-            ClientGenerator generator = generators.get(config.getControllerClass());
+            ClientGenerator generator = generators.get(config.getName());
             writeClient(target, callClientGenerator(generator, config));
         } else {
             if (isFile) {
@@ -218,7 +228,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
 
             for (ClientGeneratorConfiguration config : configurations) {
                 ClientGeneratorFactory.ClientGenerator generator =
-                        generators.get(config.getControllerClass());
+                        generators.get(config.getName());
 
                 String source = callClientGenerator(generator, config);
 

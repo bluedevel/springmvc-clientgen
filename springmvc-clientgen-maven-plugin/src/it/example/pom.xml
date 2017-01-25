@@ -45,6 +45,7 @@
                             <implementation>springmvcclientgen.test.ExampleController</implementation>
                         </controller>
                         <controller>
+                            <name>ExampleClient2</name>
                             <baseUrl>http://bla2.de</baseUrl>
                             <implementation>springmvcclientgen.test.ExampleController</implementation>
                             <generator>jquery</generator>
