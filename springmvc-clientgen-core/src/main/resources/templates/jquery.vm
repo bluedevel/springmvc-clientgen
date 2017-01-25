@@ -1,1 +1,11 @@
-lol test
+var $className = $className || {}
+
+#foreach($function in $functions)
+    $className.$!function.name=function(conf){
+    conf = $.extend({
+        method: '$!function.method'
+        url: '$!function.url'
+    }, conf);
+    return $.ajax(conf);
+}
+#end
