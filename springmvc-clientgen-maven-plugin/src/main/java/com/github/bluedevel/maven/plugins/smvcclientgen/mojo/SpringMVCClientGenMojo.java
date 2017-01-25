@@ -105,6 +105,10 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         }
     }
 
+    /**
+     * Scan over the controller configurations and generate a
+     * default name if none is explicitly set.
+     */
     private void loadControllerNames(Map<String, Class<?>> controllerClasses) {
         for (Controller controller : controllers) {
             Class<?> controllerClass = controllerClasses.get(controller.getImplementation());
