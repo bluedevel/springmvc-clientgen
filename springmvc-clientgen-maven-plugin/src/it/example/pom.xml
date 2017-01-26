@@ -27,16 +27,6 @@
                             <goal>generate-clients</goal>
                         </goals>
                     </execution>
-                    <!--<execution>
-                        <id>second execution</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>generate-clients</goal>
-                        </goals>
-                        <configuration>
-                            <generator>test</generator>
-                        </configuration>
-                    </execution>-->
                 </executions>
                 <configuration>
                     <controllers>
@@ -49,6 +39,10 @@
                             <baseUrl>http://bla2.de</baseUrl>
                             <implementation>springmvcclientgen.test.ExampleController</implementation>
                             <generator>jquery</generator>
+                        </controller>
+                        <controller>
+                            <baseUrl>http://nico.peter</baseUrl>
+                            <implementation>springmvcclientgen.test.OtherExampleController</implementation>
                         </controller>
                     </controllers>
                     <!-- Default Generator -->
