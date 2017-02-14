@@ -13,6 +13,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
@@ -198,7 +199,8 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
             decleration.setName(requestMapping.name());
             decleration.setPath(
                     getPath(requestMapping));
-            decleration.setMethods(requestMapping.method());
+            decleration.setMethods(
+                    getMethods(requestMapping));
             decleration.setHeaders(requestMapping.headers());
             decleration.setParams(requestMapping.params());
             decleration.setConsumes(
@@ -208,6 +210,18 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
             declarations.add(decleration);
         }
         configuration.setControllerDeclarations(declarations);
+    }
+
+    private RequestMethod[] getMethods(RequestMapping mapping) {
+        RequestMethod[] methods = mapping.method();
+
+        if (methods.length == 0) {
+            getLog().warn("No method is configured in mapping " + mapping + "! " +
+                    "GET will be used as default.");
+            return new RequestMethod[]{RequestMethod.GET};
+        }
+
+        return methods;
     }
 
     private String getPath(RequestMapping mapping) throws MojoFailureException {
