@@ -74,10 +74,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         Map<String, ClientGeneratorFactory.ClientGenerator> generators = loadGenerators();
         List<ClientGeneratorConfiguration> configurations = loadConfigurations(controllerClasses);
 
-        for (ClientGeneratorConfiguration configuration : configurations) {
-            loadDeclarations(configuration);
-        }
-
+        configurations.forEach(this::loadDeclarations);
         renderClients(configurations, generators);
     }
 
