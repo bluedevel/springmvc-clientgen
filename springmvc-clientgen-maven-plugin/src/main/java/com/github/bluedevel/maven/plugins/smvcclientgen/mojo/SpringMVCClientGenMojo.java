@@ -74,7 +74,10 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         Map<String, ClientGeneratorFactory.ClientGenerator> generators = loadGenerators();
         List<ClientGeneratorConfiguration> configurations = loadConfigurations(controllerClasses);
 
-        configurations.forEach(this::loadDeclarations);
+        for (ClientGeneratorConfiguration configuration : configurations) {
+            loadDeclarations(configuration);
+        }
+
         renderClients(configurations, generators);
     }
 
@@ -176,18 +179,13 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         return configs;
     }
 
-    private void loadDeclarations(ClientGeneratorConfiguration configuration) {
+    private void loadDeclarations(ClientGeneratorConfiguration configuration) throws MojoFailureException {
         List<ClientGeneratorControllerDeclaration> declarations = new ArrayList<>();
         for (Method method : configuration.getControllerClass().getMethods()) {
             RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
 
             if (requestMapping == null) {
                 continue;
-            }
-
-            if (requestMapping.path().length > 1) {
-                getLog().warn("Multiple paths are not supported! " +
-                        "The first one will be used on the client");
             }
 
             if (requestMapping.consumes().length > 1) {
@@ -198,16 +196,62 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
             ClientGeneratorControllerDeclaration decleration = new ClientGeneratorControllerDeclaration();
             decleration.setControllerMethod(method);
             decleration.setName(requestMapping.name());
-            decleration.setPath(requestMapping.path().length > 0 ?
-                    requestMapping.path() : requestMapping.value());
+            decleration.setPath(
+                    getPath(requestMapping));
             decleration.setMethods(requestMapping.method());
             decleration.setHeaders(requestMapping.headers());
             decleration.setParams(requestMapping.params());
-            decleration.setConsumes(requestMapping.consumes());
-            decleration.setProduces(requestMapping.produces());
+            decleration.setConsumes(
+                    getConsumes(requestMapping));
+            decleration.setProduces(
+                    getProduces(requestMapping));
             declarations.add(decleration);
         }
         configuration.setControllerDeclarations(declarations);
+    }
+
+    private String getPath(RequestMapping mapping) throws MojoFailureException {
+        String[] path = mapping.path().length > 0 ?
+                mapping.path() : mapping.value();
+
+        if (path.length > 0) {
+            if (path.length > 1) {
+                getLog().warn("Multiple paths are not supported! " +
+                        "The first one will be used on the client");
+            }
+            return path[0];
+        }
+
+        getLog().warn("No path is configured for client!");
+        return "";
+    }
+
+    private String getConsumes(RequestMapping mapping) {
+        String[] consumes = mapping.consumes();
+
+        if (consumes.length > 0) {
+            if (consumes.length > 1) {
+                getLog().warn("Multiple consumes are not supported! " +
+                        "The first one will be used on the client");
+            }
+            return consumes[0];
+        }
+
+        return null;
+    }
+
+    private String getProduces(RequestMapping mapping) {
+        String[] produces = mapping.consumes();
+
+        if (produces.length > 0) {
+            if (produces.length > 1) {
+                getLog().warn("Multiple consumes are not supported! " +
+                        "The first one will be used on the client");
+            }
+            return produces[0];
+        }
+
+        return null;
     }
 
     private void renderClients(List<ClientGeneratorConfiguration> configurations,

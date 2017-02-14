@@ -3,6 +3,7 @@ package com.bluedevel.smvcclientgen.core;
 import com.bluedevel.smvcclientgen.ClientGenerator;
 import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
 import com.bluedevel.smvcclientgen.ClientGeneratorControllerDeclaration;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -11,8 +12,11 @@ import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.StringWriter;
-import java.util.ArrayList;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Robin Engel
@@ -30,6 +34,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
     }
 
     public String render(ClientGeneratorConfiguration config) throws Exception {
+
         if (config.getControllerDeclarations() == null) {
             return "";
         }
@@ -41,38 +46,10 @@ public class JavaScriptClientGenerator implements ClientGenerator {
 
         Template template = ve.getTemplate("templates/" + templateName + ".vm", "UTF-8");
 
-        List<FunctionConfig> functions = new ArrayList<>();
-        for (ClientGeneratorControllerDeclaration declaration : config.getControllerDeclarations()) {
-            if (declaration.getPath() == null || declaration.getPath().length == 0) {
-                continue;
-            }
-
-            if (declaration.getMethods() == null || declaration.getMethods().length == 0) {
-                declaration.setMethods(new RequestMethod[]{RequestMethod.GET});
-            }
-
-            String consumes = null;
-            if (declaration.getConsumes() != null && declaration.getConsumes().length > 0) {
-                consumes = declaration.getConsumes()[0];
-            }
-
-            for (RequestMethod requestMethod : declaration.getMethods()) {
-                String methodName = declaration.getControllerMethod().getName();
-
-                // check weather implementing method name starts with http method
-                if (!methodName.toLowerCase().startsWith(requestMethod.name().toLowerCase())) {
-                    methodName = requestMethod.name().toLowerCase() + capitalizeFirstLetter(methodName);
-                }
-
-                FunctionConfig function = new FunctionConfig();
-                function.name = methodName;
-                function.method = requestMethod.name();
-                function.url = config.getBaseURL().toString() + declaration.getPath()[0];
-                function.consumes = consumes;
-
-                functions.add(function);
-            }
-        }
+        List<FunctionConfig> functions = config.getControllerDeclarations().stream()
+                .flatMap(this::getDummies)
+                .map(this::getFunctionConfig)
+                .collect(Collectors.toList());
 
         String className = config.getName();
         String baseUrl = config.getBaseURL() != null ? config.getBaseURL().toString() : "";
@@ -87,6 +64,41 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         return writer.toString();
     }
 
+    private Stream<ClientGeneratorControllerDeclarationDummy> getDummies(ClientGeneratorControllerDeclaration declaration) {
+        return Arrays.stream(declaration.getMethods())
+                .map(e -> this.getDummy(declaration, e));
+    }
+
+    private ClientGeneratorControllerDeclarationDummy getDummy(ClientGeneratorControllerDeclaration declaration, RequestMethod requestMethod) {
+        ClientGeneratorControllerDeclarationDummy dummy = new ClientGeneratorControllerDeclarationDummy();
+        try {
+            BeanUtils.copyProperties(dummy, declaration);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        dummy.method = requestMethod;
+        return dummy;
+    }
+
+    private FunctionConfig getFunctionConfig(ClientGeneratorControllerDeclarationDummy declaration) {
+        String methodName = declaration.getControllerMethod().getName();
+        RequestMethod requestMethod = declaration.method;
+
+        // check weather implementing method name starts with http method
+        if (!methodName.toLowerCase().startsWith(requestMethod.name().toLowerCase())) {
+            methodName = requestMethod.name().toLowerCase() + capitalizeFirstLetter(methodName);
+        }
+
+        FunctionConfig function = new FunctionConfig();
+        function.name = methodName;
+        function.method = requestMethod.name();
+        function.url = declaration.getPath();
+        function.consumes = declaration.getConsumes();
+        function.produces = declaration.getProduces();
+
+        return function;
+    }
+
     private String capitalizeFirstLetter(String str) {
         if (str.length() == 0) {
             return "";
@@ -97,11 +109,16 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
+    private static class ClientGeneratorControllerDeclarationDummy extends ClientGeneratorControllerDeclaration {
+        private RequestMethod method;
+    }
+
     public static class FunctionConfig {
         private String name;
         private String method;
         private String url;
         private String consumes;
+        private String produces;
 
         public String getName() {
             return name;
@@ -117,6 +134,10 @@ public class JavaScriptClientGenerator implements ClientGenerator {
 
         public String getConsumes() {
             return consumes;
+        }
+
+        public String getProduces() {
+            return produces;
         }
     }
 }
