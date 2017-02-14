@@ -12,7 +12,7 @@ public class ClientGeneratorControllerDeclaration {
     private Method controllerMethod;
     private String name;
     private String[] path;
-    private RequestMethod[] method;
+    private RequestMethod[] methods;
     private String[] params;
     private String[] headers;
     private String[] consumes;
@@ -21,11 +21,11 @@ public class ClientGeneratorControllerDeclaration {
     public ClientGeneratorControllerDeclaration() {
     }
 
-    public ClientGeneratorControllerDeclaration(Method controllerMethod, String name, String[] path, RequestMethod[] method, String[] params, String[] headers, String[] consumes, String[] produces) {
+    public ClientGeneratorControllerDeclaration(Method controllerMethod, String name, String[] path, RequestMethod[] methods, String[] params, String[] headers, String[] consumes, String[] produces) {
         this.controllerMethod = controllerMethod;
         this.name = name;
         this.path = path;
-        this.method = method;
+        this.methods = methods;
         this.params = params;
         this.headers = headers;
         this.consumes = consumes;
@@ -56,12 +56,12 @@ public class ClientGeneratorControllerDeclaration {
         this.path = path;
     }
 
-    public RequestMethod[] getMethod() {
-        return method;
+    public RequestMethod[] getMethods() {
+        return methods;
     }
 
-    public void setMethod(RequestMethod[] method) {
-        this.method = method;
+    public void setMethods(RequestMethod[] methods) {
+        this.methods = methods;
     }
 
     public String[] getParams() {

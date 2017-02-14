@@ -203,7 +203,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
             decleration.setName(requestMapping.name());
             decleration.setPath(requestMapping.path().length > 0 ?
                     requestMapping.path() : requestMapping.value());
-            decleration.setMethod(requestMapping.method());
+            decleration.setMethods(requestMapping.method());
             decleration.setHeaders(requestMapping.headers());
             decleration.setParams(requestMapping.params());
             decleration.setConsumes(requestMapping.consumes());

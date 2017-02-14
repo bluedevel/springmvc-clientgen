@@ -47,8 +47,8 @@ public class JavaScriptClientGenerator implements ClientGenerator {
                 continue;
             }
 
-            if (declaration.getMethod() == null || declaration.getMethod().length == 0) {
-                declaration.setMethod(new RequestMethod[]{RequestMethod.GET});
+            if (declaration.getMethods() == null || declaration.getMethods().length == 0) {
+                declaration.setMethods(new RequestMethod[]{RequestMethod.GET});
             }
 
             String consumes = null;
@@ -56,7 +56,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
                 consumes = declaration.getConsumes()[0];
             }
 
-            for (RequestMethod requestMethod : declaration.getMethod()) {
+            for (RequestMethod requestMethod : declaration.getMethods()) {
                 String methodName = declaration.getControllerMethod().getName();
 
                 // check weather implementing method name starts with http method
