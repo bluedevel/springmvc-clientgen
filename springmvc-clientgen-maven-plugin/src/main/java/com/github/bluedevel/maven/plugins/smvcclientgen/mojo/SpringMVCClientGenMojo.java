@@ -336,6 +336,10 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         return null;
     }
 
+    /**
+     * Renders and writes a {@link EnhancedClientGenConfig} to the file or directory
+     * configured by the plugin settings.
+     */
     private void render(EnhancedClientGenConfig config) {
         boolean isFile = target.isFile() || target.getName().contains(".");
 
@@ -358,6 +362,9 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         writeClient(file, source);
     }
 
+    /**
+     * Wraps the call of a {@link ClientGenerator}.
+     */
     private String callClientGenerator(ClientGenerator clientGenerator, ClientGeneratorConfiguration config) {
         try {
             return clientGenerator.render(config);
@@ -369,6 +376,9 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         }
     }
 
+    /**
+     * Writes a {@link String} to a {@link File} and creates the parent directory if necessary.
+     */
     private void writeClient(File file, String source) {
         try {
             FileUtils.forceMkdirParent(file);
