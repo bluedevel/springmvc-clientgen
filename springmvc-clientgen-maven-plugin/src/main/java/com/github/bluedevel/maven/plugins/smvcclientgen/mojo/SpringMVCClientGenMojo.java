@@ -102,10 +102,18 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
          */
     }
 
+    /**
+     * Wrap a exception inside a {@link RuntimeException} so that it can be thrown out of a stream
+     * as an unchecked exception.
+     */
     private void throwSilent(AbstractMojoExecutionException e) {
         throw new RuntimeException("This exception serves only as a wrapper. You shouldn't ever see it!", e);
     }
 
+    /**
+     * Take a {@link RuntimeException} and unwrap the cause if it's one of the expected exceptions.<br>
+     * This is used for catching expected exceptions out of a stream, which are wrapped in an unexpected exception.
+     */
     private void handleSilentException(RuntimeException e) throws MojoExecutionException, MojoFailureException {
         Throwable cause = e.getCause();
 
@@ -118,11 +126,17 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         throw e;
     }
 
+    /**
+     * Enhances {@link ClientGeneratorConfiguration} with data needed inside the controller processing stream.
+     */
     private static class EnhancedClientGenConfig extends ClientGeneratorConfiguration {
         private Controller controller;
         private ClientGeneratorFactory.ClientGenerator generator;
     }
 
+    /**
+     * Get the output directory of the {@link MavenProject} as a {@link URL}
+     */
     private URL getOutputUrl() throws MojoExecutionException {
         File outputDirectory = new File(project.getBuild().getOutputDirectory());
         try {
@@ -147,7 +161,9 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         }
     }
 
-
+    /**
+     * TODO
+     */
     private EnhancedClientGenConfig getConfiguration(Controller controller) {
         EnhancedClientGenConfig config = new EnhancedClientGenConfig();
         config.setName(controller.getName());
@@ -158,6 +174,10 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         return config;
     }
 
+    /**
+     * Enhance a {@link EnhancedClientGenConfig} with it's controllers {@link Class}.<br>
+     * The configured {@link ClassLoader} will try to load the {@link Class} specified in the {@link Controller}.
+     */
     private void fillControllerClass(EnhancedClientGenConfig config) {
         try {
             Class<?> clazz = classLoader.loadClass(config.controller.getImplementation());
@@ -168,6 +188,11 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         }
     }
 
+    /**
+     * Evaluate weather the controller class of a {@link EnhancedClientGenConfig} is a proper spring-mvc controller.
+     *
+     * @throws NullPointerException if the {@link EnhancedClientGenConfig} isn't enhanced with the controller class.
+     */
     private boolean isSpringMvcController(EnhancedClientGenConfig config) {
         Class<?> clazz = config.getControllerClass();
         if (clazz.isAnnotationPresent(org.springframework.stereotype.Controller.class)
