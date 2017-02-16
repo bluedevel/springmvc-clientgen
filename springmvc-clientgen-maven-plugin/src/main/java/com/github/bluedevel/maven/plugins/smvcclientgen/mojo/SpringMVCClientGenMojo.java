@@ -62,6 +62,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         generatorFactory = new ClientGeneratorFactory();
     }
 
+    @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (controllers == null || controllers.length == 0) {
             return;
