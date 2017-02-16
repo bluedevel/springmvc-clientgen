@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static java.util.Arrays.stream;
+
 /**
  * @author Robin Engel
  */
@@ -80,6 +82,83 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
                 .collect(Collectors.toList());
 
         renderClients(configurations, generators);
+
+        stream(controllers)
+                .map(this::getConfiguration)
+                .peek(this::fillControllerClass)
+                .filter(this::isSpringMvcController)
+                .peek(this::fillControllerName)
+                .peek(this::fillBaseUrl)
+                .peek(this::fillGenerator)
+                .peek(this::fillDecleration)
+                .forEach(this::renderClient);
+    }
+
+    private EnhancedClientGenConfig getConfiguration(Controller controller) {
+        EnhancedClientGenConfig config = new EnhancedClientGenConfig();
+        config.setName(controller.getName());
+        config.setBaseURL(controller.getBaseUrl());
+
+        // set controller here to fetch the data later on
+        config.controller = controller;
+        return config;
+    }
+
+    private void fillControllerClass(EnhancedClientGenConfig config) {
+        try {
+            Class<?> clazz = classLoader.loadClass(config.controller.getImplementation());
+            config.setControllerClass(clazz);
+        } catch (ClassNotFoundException e) {
+            // TODO deal with this later
+            //throw new MojoFailureException("Could not scan class", e);
+        }
+    }
+
+    private boolean isSpringMvcController(EnhancedClientGenConfig config) {
+        Class<?> clazz = config.getControllerClass();
+        if (clazz.isAnnotationPresent(org.springframework.stereotype.Controller.class)
+                || clazz.isAnnotationPresent(RestController.class)) {
+            getLog().warn("Class " + clazz.getName() + " is not an actual controller! " +
+                    "Class must be annotated with " + org.springframework.stereotype.Controller.class.getName() +
+                    " or " + RestController.class.getName());
+            return true;
+        }
+
+        return false;
+    }
+
+    private void fillControllerName(ClientGeneratorConfiguration config) {
+        Class<?> controllerClass = config.getControllerClass();
+        String name = StringUtils.defaultIfEmpty(
+                config.getName(), getControllerName(controllerClass));
+        config.setName(name);
+    }
+
+    private String getControllerName(Class<?> clazz) {
+        String name = clazz.getSimpleName();
+        name = name.replace("Controller", "");
+        name = name.replace("Resource", "");
+        name = name + "Client";
+        return name;
+    }
+
+    private void fillBaseUrl(EnhancedClientGenConfig config) {
+        config.setBaseURL(ObjectUtils.defaultIfNull(config.getBaseURL(), baseUrl));
+    }
+
+    private void fillGenerator(EnhancedClientGenConfig config) {
+        String generatorName = StringUtils.defaultIfEmpty(
+                config.controller.getGenerator(), generator);
+        config.generator = generatorFactory.getClientGenerator(generatorName);
+    }
+
+    private void fillDecleration(EnhancedClientGenConfig config) {
+
+    }
+
+    private static class EnhancedClientGenConfig extends ClientGeneratorConfiguration {
+        private Controller controller;
+        private ClientGeneratorFactory.ClientGenerator generator;
     }
 
     private URL getOutputUrl() throws MojoExecutionException {
@@ -106,6 +185,12 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         }
     }
 
+    /*
+     *  -----------
+     * | OLD STUFF |
+     *  -----------
+     */
+
     /**
      * Scan over the controller configurations and generate a
      * default name if none is explicitly set.
@@ -117,14 +202,6 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
                     controller.getName(), getControllerName(controllerClass));
             controller.setName(name);
         }
-    }
-
-    private String getControllerName(Class<?> clazz) {
-        String name = clazz.getSimpleName();
-        name = name.replace("Controller", "");
-        name = name.replace("Resource", "");
-        name = name + "Client";
-        return name;
     }
 
     /**
