@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Robin Engel
@@ -73,11 +74,10 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         Map<String, Class<?>> controllerClasses = loadControllerClasses(classLoader);
         loadControllerNames(controllerClasses);
         Map<String, ClientGeneratorFactory.ClientGenerator> generators = loadGenerators();
-        List<ClientGeneratorConfiguration> configurations = loadConfigurations(controllerClasses);
 
-        for (ClientGeneratorConfiguration configuration : configurations) {
-            loadDeclarations(configuration);
-        }
+        List<ClientGeneratorConfiguration> configurations = loadConfigurations(controllerClasses).stream()
+                .peek(this::loadDeclarations)
+                .collect(Collectors.toList());
 
         renderClients(configurations, generators);
     }
@@ -180,7 +180,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         return configs;
     }
 
-    private void loadDeclarations(ClientGeneratorConfiguration configuration) throws MojoFailureException {
+    private void loadDeclarations(ClientGeneratorConfiguration configuration) {
         List<ClientGeneratorControllerDeclaration> declarations = new ArrayList<>();
         for (Method method : configuration.getControllerClass().getMethods()) {
             RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
@@ -224,7 +224,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         return methods;
     }
 
-    private String getPath(RequestMapping mapping) throws MojoFailureException {
+    private String getPath(RequestMapping mapping) {
         String[] path = mapping.path().length > 0 ?
                 mapping.path() : mapping.value();
 
