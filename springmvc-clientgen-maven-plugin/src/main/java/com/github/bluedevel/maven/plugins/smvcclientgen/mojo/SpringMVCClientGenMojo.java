@@ -7,6 +7,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.AbstractMojoExecutionException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -74,6 +75,14 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
 
         configureGeneratorFactory();
 
+        try {
+            processControllers();
+        } catch (RuntimeException e) {
+            handleSilentException(e);
+        }
+    }
+
+    private void processControllers() {
         stream(controllers)
                 .map(this::getConfiguration)
                 .peek(this::fillControllerClass)
@@ -93,6 +102,21 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
          */
     }
 
+    private void throwSilent(AbstractMojoExecutionException e) {
+        throw new RuntimeException("This exception serves only as a wrapper. You shouldn't ever see it!", e);
+    }
+
+    private void handleSilentException(RuntimeException e) throws MojoExecutionException, MojoFailureException {
+        Throwable cause = e.getCause();
+
+        if (cause instanceof MojoExecutionException) {
+            throw (MojoExecutionException) cause;
+        } else if (cause instanceof MojoFailureException) {
+            throw (MojoFailureException) cause;
+        }
+
+        throw e;
+    }
 
     private static class EnhancedClientGenConfig extends ClientGeneratorConfiguration {
         private Controller controller;
@@ -139,8 +163,8 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
             Class<?> clazz = classLoader.loadClass(config.controller.getImplementation());
             config.setControllerClass(clazz);
         } catch (ClassNotFoundException e) {
-            // TODO deal with this later
-            //throw new MojoFailureException("Could not scan class", e);
+            throwSilent(new MojoFailureException(
+                    "Could not scan class", e));
         }
     }
 
@@ -296,9 +320,10 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         try {
             return clientGenerator.render(config);
         } catch (Exception e) {
-            // TODO deal with this later
-            //throw new MojoFailureException("Failed to render clients: " + e.getMessage(), e);
-            return "";
+            throwSilent(new MojoFailureException(
+                    "Failed to render clients: " + e.getMessage(), e));
+            // never reached, but a hack for exception handling with the stream api
+            return null;
         }
     }
 
@@ -306,23 +331,24 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         try {
             FileUtils.forceMkdirParent(file);
         } catch (IOException e) {
-            // TODO deal with this later
-            //throw new MojoFailureException("Couldn't create parent directories for file " + file.getAbsolutePath(), e);
+            throwSilent(new MojoFailureException(
+                    "Couldn't create parent directories for file " + file.getAbsolutePath(), e));
         }
 
         try {
             file.createNewFile();
         } catch (IOException e) {
-            // TODO deal with this later
-            //throw new MojoFailureException("Couldn't write client file to " + file.getAbsolutePath(), e);
+            throwSilent(new MojoFailureException(
+                    "Couldn't write client file to " + file.getAbsolutePath(), e));
         }
 
         PrintWriter printer;
         try {
             printer = new PrintWriter(file);
         } catch (FileNotFoundException e) {
-            // TODO deal with this later
-            //throw new MojoFailureException("File not found " + file.getAbsolutePath(), e);
+            throwSilent(new MojoFailureException(
+                    "File not found " + file.getAbsolutePath(), e));
+            // never reached, but a hack for exception handling with the stream api
             return;
         }
 
