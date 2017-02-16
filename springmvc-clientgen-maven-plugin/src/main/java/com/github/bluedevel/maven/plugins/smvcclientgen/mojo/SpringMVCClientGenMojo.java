@@ -189,11 +189,9 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
     }
 
     /**
-     * Evaluate weather the controller class of a {@link EnhancedClientGenConfig} is a proper spring-mvc controller.
-     *
-     * @throws NullPointerException if the {@link EnhancedClientGenConfig} isn't enhanced with the controller class.
+     * Evaluate weather the controller class of a {@link ClientGeneratorConfiguration} is a proper spring-mvc controller.
      */
-    private boolean isSpringMvcController(EnhancedClientGenConfig config) {
+    private boolean isSpringMvcController(ClientGeneratorConfiguration config) {
         Class<?> clazz = config.getControllerClass();
         if (clazz.isAnnotationPresent(org.springframework.stereotype.Controller.class)
                 || clazz.isAnnotationPresent(RestController.class)) {
@@ -206,6 +204,10 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         return false;
     }
 
+    /**
+     * Ensures that a proper name is set for a {@link ClientGeneratorConfiguration}.
+     * If it's not, a default will be generated.
+     */
     private void fillControllerName(ClientGeneratorConfiguration config) {
         Class<?> controllerClass = config.getControllerClass();
         String name = StringUtils.defaultIfEmpty(
@@ -213,6 +215,9 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         config.setName(name);
     }
 
+    /**
+     * Generates a controller name from a {@link Class}.
+     */
     private String getControllerName(Class<?> clazz) {
         String name = clazz.getSimpleName();
         name = name.replace("Controller", "");
@@ -221,17 +226,29 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         return name;
     }
 
-    private void fillBaseUrl(EnhancedClientGenConfig config) {
+    /**
+     * Sets the base url of a {@link ClientGeneratorConfiguration} to the default one if none is configured.
+     */
+    private void fillBaseUrl(ClientGeneratorConfiguration config) {
         config.setBaseURL(ObjectUtils.defaultIfNull(config.getBaseURL(), baseUrl));
     }
 
+    /**
+     * Enhances a {@link EnhancedClientGenConfig} with a generator,
+     * which is loaded from the configured {@link ClientGeneratorFactory}.
+     */
     private void fillGenerator(EnhancedClientGenConfig config) {
         String generatorName = StringUtils.defaultIfEmpty(
                 config.controller.getGenerator(), generator);
         config.generator = generatorFactory.getClientGenerator(generatorName);
     }
 
-    private void fillDeclaration(EnhancedClientGenConfig config) {
+    /**
+     * Enhance a {@link EnhancedClientGenConfig} with {@link ClientGeneratorControllerDeclaration}s.<br>
+     * A declaration is created for every {@link RequestMethod}
+     * on the {@link RequestMapping} of this {@link ClientGeneratorConfiguration}
+     */
+    private void fillDeclaration(ClientGeneratorConfiguration config) {
         List<ClientGeneratorControllerDeclaration> declarations = new ArrayList<>();
         for (Method method : config.getControllerClass().getMethods()) {
             RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
