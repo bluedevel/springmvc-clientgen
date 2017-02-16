@@ -3,7 +3,7 @@ var $className = $className || {}
 #foreach($function in $functions)
     $className.$!function.name=function(onLoad){
         var request = new XMLHttpRequest();
-        request.open('$!function.method', '$!function.url');
+        request.open('$!function.method', '$baseUrl$!function.url');
 
         #if(!$function.consumes)
         request.setRequestHeader('Content-Type','$!function.consumes');

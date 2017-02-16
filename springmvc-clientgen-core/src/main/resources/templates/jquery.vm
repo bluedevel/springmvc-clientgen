@@ -4,7 +4,7 @@ var $className = $className || {}
     $className.$!function.name=function(conf){
     conf = $.extend({
         method: '$!function.method'
-        url: '$!function.url'
+        url: '$baseUrl$!function.url'
     }, conf);
     return $.ajax(conf);
 }
