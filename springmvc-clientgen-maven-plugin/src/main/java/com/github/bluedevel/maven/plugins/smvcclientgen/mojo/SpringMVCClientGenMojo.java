@@ -161,9 +161,6 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         }
     }
 
-    /**
-     * TODO
-     */
     private EnhancedClientGenConfig getConfiguration(Controller controller) {
         EnhancedClientGenConfig config = new EnhancedClientGenConfig();
         config.setName(controller.getName());
