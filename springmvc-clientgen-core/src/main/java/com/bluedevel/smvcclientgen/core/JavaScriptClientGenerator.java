@@ -101,7 +101,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         FunctionConfig function = new FunctionConfig();
         function.name = methodName;
         function.method = requestMethod.name();
-        function.url = declaration.getPath();
+        function.path = declaration.getPath();
         function.consumes = declaration.getConsumes();
         function.produces = declaration.getProduces();
 
@@ -154,7 +154,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
     public static class FunctionConfig {
         private String name;
         private String method;
-        private String url;
+        private String path;
         private String consumes;
         private String produces;
         private List<Parameter> parameters = new ArrayList<>();
@@ -167,8 +167,8 @@ public class JavaScriptClientGenerator implements ClientGenerator {
             return method;
         }
 
-        public String getUrl() {
-            return url;
+        public String getPath() {
+            return path;
         }
 
         public String getConsumes() {
