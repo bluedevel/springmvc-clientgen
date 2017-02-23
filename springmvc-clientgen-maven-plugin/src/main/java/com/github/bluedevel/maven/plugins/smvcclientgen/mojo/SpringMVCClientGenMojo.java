@@ -15,7 +15,6 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
@@ -23,7 +22,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
-import java.lang.reflect.TypeVariable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -274,28 +272,9 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
             decleration.setProduces(
                     getProduces(requestMapping));
 
-            fillParameters(decleration, requestMapping);
-
             declarations.add(decleration);
         }
         config.setControllerDeclarations(declarations);
-    }
-
-    private void fillParameters(ClientGeneratorControllerDeclaration decleration, RequestMapping requestMapping) {
-        for (TypeVariable<Method> variable : decleration.getControllerMethod().getTypeParameters()) {
-            RequestParam param = variable.getAnnotation(RequestParam.class);
-
-            if (param == null) {
-                continue;
-            }
-
-            String name = StringUtils.defaultIfEmpty(param.name(), param.value());
-            if (decleration.getPath().contains("{" + name + "}")) {
-                //path param here
-            } else {
-                //query param here
-            }
-        }
     }
 
     private RequestMethod[] getMethods(RequestMapping mapping) {

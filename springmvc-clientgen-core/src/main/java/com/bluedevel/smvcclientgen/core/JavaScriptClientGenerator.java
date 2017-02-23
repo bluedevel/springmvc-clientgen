@@ -3,16 +3,22 @@ package com.bluedevel.smvcclientgen.core;
 import com.bluedevel.smvcclientgen.ClientGenerator;
 import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
 import com.bluedevel.smvcclientgen.ClientGeneratorControllerDeclaration;
+import com.bluedevel.smvcclientgen.Parameter;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.TypeVariable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
@@ -50,7 +56,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         Template template = ve.getTemplate("templates/" + templateName + ".vm", "UTF-8");
 
         List<FunctionConfig> functions = config.getControllerDeclarations().stream()
-                .flatMap(this::getDummies)
+                .flatMap(this::forEachRequestMethod)
                 .map(this::getFunctionConfig)
                 .collect(Collectors.toList());
 
@@ -67,13 +73,13 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         return writer.toString();
     }
 
-    private Stream<ClientGeneratorControllerDeclarationDummy> getDummies(ClientGeneratorControllerDeclaration declaration) {
+    private Stream<EnhancedClientGeneratorControllerDeclaration> forEachRequestMethod(ClientGeneratorControllerDeclaration declaration) {
         return Arrays.stream(declaration.getMethods())
-                .map(e -> this.getDummy(declaration, e));
+                .map(e -> this.getEnhancedControllerDecleration(declaration, e));
     }
 
-    private ClientGeneratorControllerDeclarationDummy getDummy(ClientGeneratorControllerDeclaration declaration, RequestMethod requestMethod) {
-        ClientGeneratorControllerDeclarationDummy dummy = new ClientGeneratorControllerDeclarationDummy();
+    private EnhancedClientGeneratorControllerDeclaration getEnhancedControllerDecleration(ClientGeneratorControllerDeclaration declaration, RequestMethod requestMethod) {
+        EnhancedClientGeneratorControllerDeclaration dummy = new EnhancedClientGeneratorControllerDeclaration();
         try {
             BeanUtils.copyProperties(dummy, declaration);
         } catch (IllegalAccessException | InvocationTargetException e) {
@@ -83,7 +89,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         return dummy;
     }
 
-    private FunctionConfig getFunctionConfig(ClientGeneratorControllerDeclarationDummy declaration) {
+    private FunctionConfig getFunctionConfig(EnhancedClientGeneratorControllerDeclaration declaration) {
         String methodName = declaration.getControllerMethod().getName();
         RequestMethod requestMethod = declaration.method;
 
@@ -99,7 +105,35 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         function.consumes = declaration.getConsumes();
         function.produces = declaration.getProduces();
 
+        fillParameters(function, declaration);
+
         return function;
+    }
+
+    private void fillParameters(FunctionConfig function, ClientGeneratorControllerDeclaration decleration) {
+        for (TypeVariable<Method> variable : decleration.getControllerMethod().getTypeParameters()) {
+            RequestParam requestParam = variable.getAnnotation(RequestParam.class);
+
+            if (requestParam == null) {
+                continue;
+            }
+
+            String name = StringUtils.defaultIfEmpty(
+                    requestParam.name(), requestParam.value());
+
+            if (StringUtils.isBlank(name)) {
+                continue;
+            }
+
+            Parameter parameter;
+            if (decleration.getPath().contains("{" + name + "}")) {
+                parameter = new Parameter(name, Parameter.Type.PATH);
+            } else {
+                parameter = new Parameter(name, Parameter.Type.QUERY);
+            }
+
+            function.getParameters().add(parameter);
+        }
     }
 
     private String capitalizeFirstLetter(String str) {
@@ -112,7 +146,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
-    private static class ClientGeneratorControllerDeclarationDummy extends ClientGeneratorControllerDeclaration {
+    private static class EnhancedClientGeneratorControllerDeclaration extends ClientGeneratorControllerDeclaration {
         private RequestMethod method;
     }
 
@@ -122,6 +156,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         private String url;
         private String consumes;
         private String produces;
+        private List<Parameter> parameters = new ArrayList<>();
 
         public String getName() {
             return name;
@@ -141,6 +176,10 @@ public class JavaScriptClientGenerator implements ClientGenerator {
 
         public String getProduces() {
             return produces;
+        }
+
+        public List<Parameter> getParameters() {
+            return parameters;
         }
     }
 }
