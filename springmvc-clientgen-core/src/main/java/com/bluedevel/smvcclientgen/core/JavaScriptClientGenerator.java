@@ -110,6 +110,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         return function;
     }
 
+    // TODO decide weather this belongs here or in the mojo
     private void fillParameters(FunctionConfig function, ClientGeneratorControllerDeclaration decleration) {
         for (TypeVariable<Method> variable : decleration.getControllerMethod().getTypeParameters()) {
             RequestParam requestParam = variable.getAnnotation(RequestParam.class);
