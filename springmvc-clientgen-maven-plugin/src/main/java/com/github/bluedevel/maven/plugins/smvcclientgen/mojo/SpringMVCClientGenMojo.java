@@ -78,7 +78,9 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         try {
             processControllers();
         } catch (RuntimeException e) {
-            handleSilentException(e);
+            handleSilentException(e, MojoExecutionException.class);
+            handleSilentException(e, MojoFailureException.class);
+            throw e;
         }
     }
 
@@ -114,16 +116,13 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
      * Take a {@link RuntimeException} and unwrap the cause if it's one of the expected exceptions.<br>
      * This is used for catching expected exceptions out of a stream, which are wrapped in an unexpected exception.
      */
-    private void handleSilentException(RuntimeException e) throws MojoExecutionException, MojoFailureException {
+    @SuppressWarnings("unchecked")
+    private <E extends Throwable> void handleSilentException(RuntimeException e, Class<? extends E> clazz) throws E {
         Throwable cause = e.getCause();
 
-        if (cause instanceof MojoExecutionException) {
-            throw (MojoExecutionException) cause;
-        } else if (cause instanceof MojoFailureException) {
-            throw (MojoFailureException) cause;
+        if (clazz.isInstance(cause)) {
+            throw (E) cause;
         }
-
-        throw e;
     }
 
     /**
