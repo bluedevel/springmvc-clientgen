@@ -7,7 +7,7 @@ var $className = $className || {}
 
         var path = '$!function.path';
         #foreach($param in $!function.parameters)#if($!param.type=="PATH")
-        path.replace('$!param.name', $!param.name);
+        path.replace('{$!param.name}', $!param.name);
         #end#end
 
         var request = new XMLHttpRequest();
