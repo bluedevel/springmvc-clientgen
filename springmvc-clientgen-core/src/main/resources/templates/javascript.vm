@@ -6,11 +6,9 @@ var $className = $className || {}
     onLoad){
 
         var path = '$!function.path';
-        #foreach($param in $!function.parameters)
-            #if($!param.type=="PATH")
-            path.replace('$!param.name', $!param.name);
-            #end
-        #end
+        #foreach($param in $!function.parameters)#if($!param.type=="PATH")
+        path.replace('$!param.name', $!param.name);
+        #end#end
 
         var request = new XMLHttpRequest();
         request.open('$!function.method', '$baseUrl' + path);
