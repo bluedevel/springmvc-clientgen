@@ -2,14 +2,18 @@ var $className = $className || {}
 
 #foreach($function in $functions)
     $className.$!function.name=function(
-
-    #foreach($param in $!function.parameters)
-        $!param.name,
-    #end
-
+    #foreach($param in $!function.parameters)$!param.name,#end
     onLoad){
+
+        var path = '$!function.path';
+        #foreach($param in $!function.parameters)
+            #if($!param.type=="PATH")
+            path.replace('$!param.name', $!param.name);
+            #end
+        #end
+
         var request = new XMLHttpRequest();
-        request.open('$!function.method', '$baseUrl$!function.path');
+        request.open('$!function.method', '$baseUrl' + path);
 
         #if($!function.consumes)
         request.setRequestHeader('Content-Type','$!function.consumes');

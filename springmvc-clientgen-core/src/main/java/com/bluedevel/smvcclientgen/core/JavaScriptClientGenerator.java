@@ -121,7 +121,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
 
             if (pathVariable != null) {
                 String name = StringUtils.defaultIfEmpty(
-                        requestParam.name(), requestParam.value());
+                        pathVariable.name(), pathVariable.value());
 
                 if (decleration.getPath().contains("{" + name + "}")) {
                     parameter = new Parameter(name, Parameter.Type.PATH);
