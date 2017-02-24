@@ -13,8 +13,10 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
@@ -271,6 +273,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
                     getConsumes(requestMapping));
             decleration.setProduces(
                     getProduces(requestMapping));
+            fillParameters(decleration);
 
             declarations.add(decleration);
         }
@@ -331,6 +334,38 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         }
 
         return null;
+    }
+
+    /**
+     * Scans the parameters of each controller method to find path and query parameters.
+     * Those are put into the decleration for the generator to render.
+     *
+     * @param decleration {@link ClientGeneratorControllerDeclaration} to scan for parameters
+     */
+    private void fillParameters(ClientGeneratorControllerDeclaration decleration) {
+        for (java.lang.reflect.Parameter methodParameter : decleration.getControllerMethod().getParameters()) {
+            RequestParam requestParam = methodParameter.getAnnotation(RequestParam.class);
+            PathVariable pathVariable = methodParameter.getAnnotation(PathVariable.class);
+
+            com.bluedevel.smvcclientgen.Parameter parameter = null;
+            if (pathVariable != null) {
+                String name = org.apache.commons.lang.StringUtils.defaultIfEmpty(
+                        pathVariable.name(), pathVariable.value());
+
+                if (decleration.getPath().contains("{" + name + "}")) {
+                    parameter = new com.bluedevel.smvcclientgen.Parameter(name, com.bluedevel.smvcclientgen.Parameter.Type.PATH);
+                }
+            } else if (requestParam != null) {
+                String name = org.apache.commons.lang.StringUtils.defaultIfEmpty(
+                        requestParam.name(), requestParam.value());
+
+                parameter = new com.bluedevel.smvcclientgen.Parameter(name, com.bluedevel.smvcclientgen.Parameter.Type.QUERY);
+            } else {
+                continue;
+            }
+
+            decleration.getParameters().add(parameter);
+        }
     }
 
     /**

@@ -3,6 +3,8 @@ package com.bluedevel.smvcclientgen;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Robin Engel
@@ -17,8 +19,10 @@ public class ClientGeneratorControllerDeclaration {
     private String[] headers;
     private String consumes;
     private String produces;
+    private List<Parameter> parameters;
 
     public ClientGeneratorControllerDeclaration() {
+        this.parameters = new ArrayList<>();
     }
 
     public ClientGeneratorControllerDeclaration(Method controllerMethod, String name, String path, RequestMethod[] methods, String[] params, String[] headers, String consumes, String produces) {
@@ -96,4 +100,11 @@ public class ClientGeneratorControllerDeclaration {
         this.produces = produces;
     }
 
+    public List<Parameter> getParameters() {
+        return parameters;
+    }
+
+    public void setParameters(List<Parameter> parameters) {
+        this.parameters = parameters;
+    }
 }

@@ -5,19 +5,15 @@ import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
 import com.bluedevel.smvcclientgen.ClientGeneratorControllerDeclaration;
 import com.bluedevel.smvcclientgen.Parameter;
 import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
@@ -103,37 +99,9 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         function.path = declaration.getPath();
         function.consumes = declaration.getConsumes();
         function.produces = declaration.getProduces();
-
-        fillParameters(function, declaration);
+        function.parameters = declaration.getParameters();
 
         return function;
-    }
-
-    // TODO decide weather this belongs here or in the mojo
-    private void fillParameters(FunctionConfig function, ClientGeneratorControllerDeclaration decleration) {
-        for (java.lang.reflect.Parameter methodParameter : decleration.getControllerMethod().getParameters()) {
-            RequestParam requestParam = methodParameter.getAnnotation(RequestParam.class);
-            PathVariable pathVariable = methodParameter.getAnnotation(PathVariable.class);
-
-            Parameter parameter = null;
-            if (pathVariable != null) {
-                String name = StringUtils.defaultIfEmpty(
-                        pathVariable.name(), pathVariable.value());
-
-                if (decleration.getPath().contains("{" + name + "}")) {
-                    parameter = new Parameter(name, Parameter.Type.PATH);
-                }
-            } else if (requestParam != null) {
-                String name = StringUtils.defaultIfEmpty(
-                        requestParam.name(), requestParam.value());
-
-                parameter = new Parameter(name, Parameter.Type.QUERY);
-            } else {
-                continue;
-            }
-
-            function.getParameters().add(parameter);
-        }
     }
 
     private String capitalizeFirstLetter(String str) {
@@ -156,7 +124,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         private String path;
         private String consumes;
         private String produces;
-        private List<Parameter> parameters = new ArrayList<>();
+        private List<Parameter> parameters;
 
         public String getName() {
             return name;
