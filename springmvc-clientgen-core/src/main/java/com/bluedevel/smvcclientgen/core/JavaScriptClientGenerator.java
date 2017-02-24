@@ -115,10 +115,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
             RequestParam requestParam = methodParameter.getAnnotation(RequestParam.class);
             PathVariable pathVariable = methodParameter.getAnnotation(PathVariable.class);
 
-            log.info("!!!1");
-
             Parameter parameter = null;
-
             if (pathVariable != null) {
                 String name = StringUtils.defaultIfEmpty(
                         pathVariable.name(), pathVariable.value());
@@ -134,8 +131,6 @@ public class JavaScriptClientGenerator implements ClientGenerator {
             } else {
                 continue;
             }
-
-            log.info("!!!2");
 
             function.getParameters().add(parameter);
         }
