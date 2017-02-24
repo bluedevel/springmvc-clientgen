@@ -11,13 +11,12 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -112,26 +111,31 @@ public class JavaScriptClientGenerator implements ClientGenerator {
 
     // TODO decide weather this belongs here or in the mojo
     private void fillParameters(FunctionConfig function, ClientGeneratorControllerDeclaration decleration) {
-        for (TypeVariable<Method> variable : decleration.getControllerMethod().getTypeParameters()) {
-            RequestParam requestParam = variable.getAnnotation(RequestParam.class);
+        for (java.lang.reflect.Parameter methodParameter : decleration.getControllerMethod().getParameters()) {
+            RequestParam requestParam = methodParameter.getAnnotation(RequestParam.class);
+            PathVariable pathVariable = methodParameter.getAnnotation(PathVariable.class);
 
-            if (requestParam == null) {
-                continue;
-            }
+            log.info("!!!1");
 
-            String name = StringUtils.defaultIfEmpty(
-                    requestParam.name(), requestParam.value());
+            Parameter parameter = null;
 
-            if (StringUtils.isBlank(name)) {
-                continue;
-            }
+            if (pathVariable != null) {
+                String name = StringUtils.defaultIfEmpty(
+                        requestParam.name(), requestParam.value());
 
-            Parameter parameter;
-            if (decleration.getPath().contains("{" + name + "}")) {
-                parameter = new Parameter(name, Parameter.Type.PATH);
-            } else {
+                if (decleration.getPath().contains("{" + name + "}")) {
+                    parameter = new Parameter(name, Parameter.Type.PATH);
+                }
+            } else if (requestParam != null) {
+                String name = StringUtils.defaultIfEmpty(
+                        requestParam.name(), requestParam.value());
+
                 parameter = new Parameter(name, Parameter.Type.QUERY);
+            } else {
+                continue;
             }
+
+            log.info("!!!2");
 
             function.getParameters().add(parameter);
         }
