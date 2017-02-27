@@ -28,7 +28,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
 
@@ -280,16 +283,18 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         config.setControllerDeclarations(declarations);
     }
 
-    private RequestMethod[] getMethods(RequestMapping mapping) {
-        RequestMethod[] methods = mapping.method();
+    private String[] getMethods(RequestMapping mapping) {
+        List<String> methods = Arrays.stream(mapping.method())
+                .map(RequestMethod::name)
+                .collect(Collectors.toList());
 
-        if (methods.length == 0) {
+        if (methods.size() == 0) {
             getLog().warn("No method is configured in mapping " + mapping + "! " +
                     "GET will be used as default.");
-            return new RequestMethod[]{RequestMethod.GET};
+            methods = Collections.singletonList(RequestMethod.GET.name());
         }
 
-        return methods;
+        return methods.toArray(new String[0]);
     }
 
     private String getPath(RequestMapping mapping) {

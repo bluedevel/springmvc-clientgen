@@ -10,7 +10,6 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
@@ -63,6 +62,9 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         context.put("baseUrl", baseUrl);
         context.put("functions", functions);
 
+        context.put("typePath", Parameter.Type.PATH);
+        context.put("typeQuery", Parameter.Type.QUERY);
+
         StringWriter writer = new StringWriter();
         template.merge(context, writer);
         return writer.toString();
@@ -73,7 +75,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
                 .map(e -> this.getEnhancedControllerDecleration(declaration, e));
     }
 
-    private EnhancedClientGeneratorControllerDeclaration getEnhancedControllerDecleration(ClientGeneratorControllerDeclaration declaration, RequestMethod requestMethod) {
+    private EnhancedClientGeneratorControllerDeclaration getEnhancedControllerDecleration(ClientGeneratorControllerDeclaration declaration, String requestMethod) {
         EnhancedClientGeneratorControllerDeclaration dummy = new EnhancedClientGeneratorControllerDeclaration();
         try {
             BeanUtils.copyProperties(dummy, declaration);
@@ -86,16 +88,16 @@ public class JavaScriptClientGenerator implements ClientGenerator {
 
     private FunctionConfig getFunctionConfig(EnhancedClientGeneratorControllerDeclaration declaration) {
         String methodName = declaration.getControllerMethod().getName();
-        RequestMethod requestMethod = declaration.method;
+        String requestMethod = declaration.method;
 
         // check weather implementing method name starts with http method
-        if (!methodName.toLowerCase().startsWith(requestMethod.name().toLowerCase())) {
-            methodName = requestMethod.name().toLowerCase() + capitalizeFirstLetter(methodName);
+        if (!methodName.toLowerCase().startsWith(requestMethod.toLowerCase())) {
+            methodName = requestMethod.toLowerCase() + capitalizeFirstLetter(methodName);
         }
 
         FunctionConfig function = new FunctionConfig();
         function.name = methodName;
-        function.method = requestMethod.name();
+        function.method = requestMethod;
         function.path = declaration.getPath();
         function.consumes = declaration.getConsumes();
         function.produces = declaration.getProduces();
@@ -115,7 +117,7 @@ public class JavaScriptClientGenerator implements ClientGenerator {
     }
 
     private static class EnhancedClientGeneratorControllerDeclaration extends ClientGeneratorControllerDeclaration {
-        private RequestMethod method;
+        private String method;
     }
 
     public static class FunctionConfig {
@@ -125,6 +127,23 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         private String consumes;
         private String produces;
         private List<Parameter> parameters;
+
+        public boolean hasParametersOfType(Parameter.Type type) {
+            return getParametersByTypeAsStream(type)
+                    .findAny()
+                    .isPresent();
+        }
+
+        public List<String> getParametersByType(Parameter.Type type) {
+            return getParametersByTypeAsStream(type)
+                    .collect(Collectors.toList());
+        }
+
+        private Stream<String> getParametersByTypeAsStream(Parameter.Type type) {
+            return parameters.stream()
+                    .filter(p -> p.getType() == type)
+                    .map(Parameter::getName);
+        }
 
         public String getName() {
             return name;
