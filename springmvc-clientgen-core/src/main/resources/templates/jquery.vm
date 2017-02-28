@@ -1,10 +1,35 @@
 var $className = $className || {}
 
 #foreach($function in $functions)
-    $className.$!function.name=function(conf){
+    $className.$!function.name=function(
+    #foreach($param in $!function.parameters)$!param.name,#end
+    conf){
+
+    var path = '$!function.path';
+    #foreach($param in $function.getParametersByType($typePath))
+    path.replace('{$param}', $param);
+    #end
+
+    path = encodeURI(path);
+
+    #if($function.hasParametersOfType($typeQuery))
+    path += '?';
+    var queryParams = [];
+
+        #foreach($param in $function.getParametersByType($typeQuery))
+        queryParams.push('$param' + '=' + encodeURIComponent($param));
+        #end
+
+    path += queryParams.join('&');
+
+    #end
+
     conf = $.extend({
-        method: '$!function.method'
-        url: '$baseUrl$!function.path'
+        method: '$!function.method',
+        url: '$baseUrl' + path
+        #if($!function.consumes)
+        ,contentType: '$!function.consumes'
+        #end
     }, conf);
     return $.ajax(conf);
 }
