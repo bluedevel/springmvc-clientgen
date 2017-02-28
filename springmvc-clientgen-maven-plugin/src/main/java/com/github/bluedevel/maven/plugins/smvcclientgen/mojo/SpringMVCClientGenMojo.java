@@ -90,7 +90,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
 
     private void processControllers() {
         stream(controllers)
-                .map(this::getConfiguration)
+                .map(this::toEnhancedConfiguration)
                 .peek(this::fillControllerClass)
                 .filter(this::isSpringMvcController)
                 .peek(this::fillControllerName)
@@ -143,7 +143,10 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         }
     }
 
-    private EnhancedClientGenConfig getConfiguration(Controller controller) {
+    /**
+     * Get a {@link EnhancedClientGenConfig} for a {@link Controller} for further processing in a stream.
+     */
+    private EnhancedClientGenConfig toEnhancedConfiguration(Controller controller) {
         EnhancedClientGenConfig config = new EnhancedClientGenConfig();
         config.setName(controller.getName());
         config.setBaseURL(controller.getBaseUrl());
