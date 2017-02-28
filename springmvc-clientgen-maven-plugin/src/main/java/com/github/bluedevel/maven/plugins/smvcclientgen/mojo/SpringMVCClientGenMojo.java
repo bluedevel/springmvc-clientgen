@@ -7,7 +7,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.AbstractMojoExecutionException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -83,8 +82,8 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         try {
             processControllers();
         } catch (RuntimeException e) {
-            handleSilentException(e, MojoExecutionException.class);
-            handleSilentException(e, MojoFailureException.class);
+            StreamExceptions.handle(e, MojoExecutionException.class);
+            StreamExceptions.handle(e, MojoFailureException.class);
             throw e;
         }
     }
@@ -107,27 +106,6 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
                         "controllers are found. " +
                         "All generated clients will be overwritten by the next one!");
          */
-    }
-
-    /**
-     * Wrap a exception inside a {@link RuntimeException} so that it can be thrown out of a stream
-     * as an unchecked exception.
-     */
-    private void throwSilent(AbstractMojoExecutionException e) {
-        throw new RuntimeException("This exception serves only as a wrapper. You shouldn't ever see it!", e);
-    }
-
-    /**
-     * Take a {@link RuntimeException} and unwrap the cause if it's one of the expected exceptions.<br>
-     * This is used for catching expected exceptions out of a stream, which are wrapped in an unexpected exception.
-     */
-    @SuppressWarnings("unchecked")
-    private <E extends Throwable> void handleSilentException(RuntimeException e, Class<? extends E> clazz) throws E {
-        Throwable cause = e.getCause();
-
-        if (clazz.isInstance(cause)) {
-            throw (E) cause;
-        }
     }
 
     /**
@@ -184,7 +162,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
             Class<?> clazz = classLoader.loadClass(config.controller.getImplementation());
             config.setControllerClass(clazz);
         } catch (ClassNotFoundException e) {
-            throwSilent(new MojoFailureException(
+            StreamExceptions.throwSilent(new MojoFailureException(
                     "Could not scan class", e));
         }
     }
@@ -406,7 +384,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         try {
             return clientGenerator.render(config);
         } catch (Exception e) {
-            throwSilent(new MojoFailureException(
+            StreamExceptions.throwSilent(new MojoFailureException(
                     "Failed to render clients: " + e.getMessage(), e));
             // never reached, but a hack for exception handling with the stream api
             return null;
@@ -420,14 +398,14 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         try {
             FileUtils.forceMkdirParent(file);
         } catch (IOException e) {
-            throwSilent(new MojoFailureException(
+            StreamExceptions.throwSilent(new MojoFailureException(
                     "Couldn't create parent directories for file " + file.getAbsolutePath(), e));
         }
 
         try {
             file.createNewFile();
         } catch (IOException e) {
-            throwSilent(new MojoFailureException(
+            StreamExceptions.throwSilent(new MojoFailureException(
                     "Couldn't write client file to " + file.getAbsolutePath(), e));
         }
 
@@ -435,7 +413,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         try {
             printer = new PrintWriter(file);
         } catch (FileNotFoundException e) {
-            throwSilent(new MojoFailureException(
+            StreamExceptions.throwSilent(new MojoFailureException(
                     "File not found " + file.getAbsolutePath(), e));
             // never reached, but a hack for exception handling with the stream api
             return;
