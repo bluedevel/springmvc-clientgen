@@ -12,9 +12,14 @@ var $className = $className || {}
 
         #if($function.hasParametersOfType($typeQuery))
         path += '?';
-        #end
-        #foreach($param in $function.getParametersByType($typeQuery))
-        path += '$!param' + '=' + $!param;
+        var queryParams = [];
+
+            #foreach($param in $function.getParametersByType($typeQuery))
+            queryParams.push('$!param' + '=' + $!param);
+            #end
+
+        path += queryParams.join('&');
+
         #end
 
         var request = new XMLHttpRequest();

@@ -96,12 +96,12 @@ public class JavaScriptClientGenerator implements ClientGenerator {
         }
 
         FunctionConfig function = new FunctionConfig();
-        function.name = methodName;
-        function.method = requestMethod;
-        function.path = declaration.getPath();
-        function.consumes = declaration.getConsumes();
-        function.produces = declaration.getProduces();
-        function.parameters = declaration.getParameters();
+        function.setName(methodName);
+        function.setMethod(requestMethod);
+        function.setPath(declaration.getPath());
+        function.setConsumes(declaration.getConsumes());
+        function.setProduces(declaration.getProduces());
+        function.setParameters(declaration.getParameters());
 
         return function;
     }
@@ -118,55 +118,5 @@ public class JavaScriptClientGenerator implements ClientGenerator {
 
     private static class EnhancedClientGeneratorControllerDeclaration extends ClientGeneratorControllerDeclaration {
         private String method;
-    }
-
-    public static class FunctionConfig {
-        private String name;
-        private String method;
-        private String path;
-        private String consumes;
-        private String produces;
-        private List<Parameter> parameters;
-
-        public boolean hasParametersOfType(Parameter.Type type) {
-            return getParametersByTypeAsStream(type)
-                    .findAny()
-                    .isPresent();
-        }
-
-        public List<String> getParametersByType(Parameter.Type type) {
-            return getParametersByTypeAsStream(type)
-                    .collect(Collectors.toList());
-        }
-
-        private Stream<String> getParametersByTypeAsStream(Parameter.Type type) {
-            return parameters.stream()
-                    .filter(p -> p.getType() == type)
-                    .map(Parameter::getName);
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getMethod() {
-            return method;
-        }
-
-        public String getPath() {
-            return path;
-        }
-
-        public String getConsumes() {
-            return consumes;
-        }
-
-        public String getProduces() {
-            return produces;
-        }
-
-        public List<Parameter> getParameters() {
-            return parameters;
-        }
     }
 }
