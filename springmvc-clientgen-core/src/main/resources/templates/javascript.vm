@@ -10,12 +10,14 @@ var $className = $className || {}
         path.replace('{$param}', $param);
         #end
 
+        path = encodeURI(path);
+
         #if($function.hasParametersOfType($typeQuery))
         path += '?';
         var queryParams = [];
 
             #foreach($param in $function.getParametersByType($typeQuery))
-            queryParams.push('$!param' + '=' + $!param);
+                queryParams.push('$param' + '=' + encodeURIComponent($param));
             #end
 
         path += queryParams.join('&');
