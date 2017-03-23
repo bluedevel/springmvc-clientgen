@@ -1,9 +1,7 @@
 package com.github.bluedevel.maven.plugins.smvcclientgen.mojo;
 
-import com.bluedevel.smvcclientgen.ClientGenerator;
 import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
 import com.bluedevel.smvcclientgen.ClientGeneratorControllerDeclaration;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.AbstractMojo;
@@ -12,16 +10,9 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -79,8 +70,10 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
 
         configureGeneratorFactory();
 
+        ClientGeneratorRenderer renderer = new ClientGeneratorRenderer(target, getLog());
+
         try {
-            processControllers();
+            processControllers(renderer);
         } catch (RuntimeException e) {
             StreamExceptions.handle(e, MojoExecutionException.class);
             StreamExceptions.handle(e, MojoFailureException.class);
@@ -88,7 +81,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         }
     }
 
-    private void processControllers() {
+    private void processControllers(ClientGeneratorRenderer renderer) {
         stream(controllers)
                 .map(this::toEnhancedConfiguration)
                 .peek(this::fillControllerClass)
@@ -97,7 +90,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
                 .peek(this::fillBaseUrl)
                 .peek(this::fillGenerator)
                 .peek(this::fillDeclaration)
-                .forEach(this::render);
+                .forEach(renderer::render);
 
         /* TODO
             Fiddle this warning in there
@@ -106,14 +99,6 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
                         "controllers are found. " +
                         "All generated clients will be overwritten by the next one!");
          */
-    }
-
-    /**
-     * Enhances {@link ClientGeneratorConfiguration} with data needed inside the controller processing stream.
-     */
-    private static class EnhancedClientGenConfig extends ClientGeneratorConfiguration {
-        private Controller controller;
-        private ClientGeneratorFactory.ClientGenerator generator;
     }
 
     /**
@@ -152,7 +137,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         config.setBaseURL(controller.getBaseUrl());
 
         // set controller here to fetch the data later on
-        config.controller = controller;
+        config.setController(controller);
         return config;
     }
 
@@ -162,7 +147,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
      */
     private void fillControllerClass(EnhancedClientGenConfig config) {
         try {
-            Class<?> clazz = classLoader.loadClass(config.controller.getImplementation());
+            Class<?> clazz = classLoader.loadClass(config.getController().getImplementation());
             config.setControllerClass(clazz);
         } catch (ClassNotFoundException e) {
             StreamExceptions.throwSilent(new MojoFailureException(
@@ -221,8 +206,8 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
      */
     private void fillGenerator(EnhancedClientGenConfig config) {
         String generatorName = StringUtils.defaultIfEmpty(
-                config.controller.getGenerator(), generator);
-        config.generator = generatorFactory.getClientGenerator(generatorName);
+                config.getController().getGenerator(), generator);
+        config.setGenerator(generatorFactory.getClientGenerator(generatorName));
     }
 
     /**
@@ -352,78 +337,5 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
 
             decleration.getParameters().add(parameter);
         }
-    }
-
-    /**
-     * Renders and writes a {@link EnhancedClientGenConfig} to the file or directory
-     * configured by the plugin settings.
-     */
-    private void render(EnhancedClientGenConfig config) {
-        boolean isFile = target.isFile() || target.getName().contains(".");
-
-        ClientGeneratorFactory.ClientGenerator generator = config.generator;
-        String source = callClientGenerator(generator, config);
-
-        File file;
-        if (isFile) {
-            file = target;
-            getLog().warn("A single file is specified to write clients to. " +
-                    "If multiple clients are configured, they will be overwritten by one another!");
-        } else {
-            file = new File(target.getAbsolutePath() +
-                    File.separator +
-                    config.getName() +
-                    "." +
-                    generator.getFileEnding());
-        }
-
-        writeClient(file, source);
-    }
-
-    /**
-     * Wraps the call of a {@link ClientGenerator}.
-     */
-    private String callClientGenerator(ClientGenerator clientGenerator, ClientGeneratorConfiguration config) {
-        try {
-            return clientGenerator.render(config);
-        } catch (Exception e) {
-            StreamExceptions.throwSilent(new MojoFailureException(
-                    "Failed to render clients: " + e.getMessage(), e));
-            // never reached, but a hack for exception handling with the stream api
-            return null;
-        }
-    }
-
-    /**
-     * Writes a {@link String} to a {@link File} and creates the parent directory if necessary.
-     */
-    private void writeClient(File file, String source) {
-        try {
-            FileUtils.forceMkdirParent(file);
-        } catch (IOException e) {
-            StreamExceptions.throwSilent(new MojoFailureException(
-                    "Couldn't create parent directories for file " + file.getAbsolutePath(), e));
-        }
-
-        try {
-            file.createNewFile();
-        } catch (IOException e) {
-            StreamExceptions.throwSilent(new MojoFailureException(
-                    "Couldn't write client file to " + file.getAbsolutePath(), e));
-        }
-
-        PrintWriter printer;
-        try {
-            printer = new PrintWriter(file);
-        } catch (FileNotFoundException e) {
-            StreamExceptions.throwSilent(new MojoFailureException(
-                    "File not found " + file.getAbsolutePath(), e));
-            // never reached, but a hack for exception handling with the stream api
-            return;
-        }
-
-        printer.print(source);
-        printer.flush();
-        printer.close();
     }
 }
