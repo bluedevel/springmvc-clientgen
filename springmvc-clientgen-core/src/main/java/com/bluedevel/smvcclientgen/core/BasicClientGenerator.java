@@ -2,7 +2,7 @@ package com.bluedevel.smvcclientgen.core;
 
 import com.bluedevel.smvcclientgen.ClientGenerator;
 import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
-import com.bluedevel.smvcclientgen.ClientGeneratorControllerDeclaration;
+import com.bluedevel.smvcclientgen.ResourceHandler;
 import com.bluedevel.smvcclientgen.Parameter;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.velocity.Template;
@@ -34,7 +34,7 @@ public class BasicClientGenerator implements ClientGenerator {
 
     public String render(ClientGeneratorConfiguration config) throws Exception {
 
-        if (config.getControllerDeclarations() == null) {
+        if (config.getResourceHandlers() == null) {
             return "";
         }
 
@@ -45,7 +45,7 @@ public class BasicClientGenerator implements ClientGenerator {
 
         Template template = ve.getTemplate("templates/" + templateName + ".vm", "UTF-8");
 
-        List<FunctionConfig> functions = config.getControllerDeclarations().stream()
+        List<FunctionConfig> functions = config.getResourceHandlers().stream()
                 .flatMap(this::forEachRequestMethod)
                 .map(this::getFunctionConfig)
                 .collect(Collectors.toList());
@@ -66,13 +66,13 @@ public class BasicClientGenerator implements ClientGenerator {
         return writer.toString();
     }
 
-    private Stream<EnhancedClientGeneratorControllerDeclaration> forEachRequestMethod(ClientGeneratorControllerDeclaration declaration) {
+    private Stream<EnhancedResourceHandler> forEachRequestMethod(ResourceHandler declaration) {
         return Arrays.stream(declaration.getMethods())
                 .map(e -> this.getEnhancedControllerDecleration(declaration, e));
     }
 
-    private EnhancedClientGeneratorControllerDeclaration getEnhancedControllerDecleration(ClientGeneratorControllerDeclaration declaration, String requestMethod) {
-        EnhancedClientGeneratorControllerDeclaration dummy = new EnhancedClientGeneratorControllerDeclaration();
+    private EnhancedResourceHandler getEnhancedControllerDecleration(ResourceHandler declaration, String requestMethod) {
+        EnhancedResourceHandler dummy = new EnhancedResourceHandler();
         try {
             BeanUtils.copyProperties(dummy, declaration);
         } catch (IllegalAccessException | InvocationTargetException e) {
@@ -82,7 +82,7 @@ public class BasicClientGenerator implements ClientGenerator {
         return dummy;
     }
 
-    private FunctionConfig getFunctionConfig(EnhancedClientGeneratorControllerDeclaration declaration) {
+    private FunctionConfig getFunctionConfig(EnhancedResourceHandler declaration) {
         String methodName = declaration.getControllerMethod().getName();
         String requestMethod = declaration.method;
 
@@ -112,7 +112,7 @@ public class BasicClientGenerator implements ClientGenerator {
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
-    private static class EnhancedClientGeneratorControllerDeclaration extends ClientGeneratorControllerDeclaration {
+    private static class EnhancedResourceHandler extends ResourceHandler {
         private String method;
     }
 }

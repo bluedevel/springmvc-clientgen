@@ -1,6 +1,8 @@
 package com.bluedevel.smvcclientgen;
 
 /**
+ * Describes a parameter on a resource handler.
+ *
  * @author Robin Engel
  */
 public class Parameter {

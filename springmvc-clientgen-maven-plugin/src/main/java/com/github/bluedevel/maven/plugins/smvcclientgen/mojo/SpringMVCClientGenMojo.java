@@ -1,7 +1,7 @@
 package com.github.bluedevel.maven.plugins.smvcclientgen.mojo;
 
 import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
-import com.bluedevel.smvcclientgen.ClientGeneratorControllerDeclaration;
+import com.bluedevel.smvcclientgen.ResourceHandler;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.AbstractMojo;
@@ -10,7 +10,11 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -23,6 +27,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.github.bluedevel.maven.plugins.smvcclientgen.mojo.StreamExceptions.handle;
+import static com.github.bluedevel.maven.plugins.smvcclientgen.mojo.StreamExceptions.throwSilent;
 import static java.util.Arrays.stream;
 
 /**
@@ -91,12 +97,18 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
         try {
             processControllers(renderer);
         } catch (RuntimeException e) {
-            StreamExceptions.handle(e, MojoExecutionException.class);
-            StreamExceptions.handle(e, MojoFailureException.class);
+            handle(e, MojoExecutionException.class);
+            handle(e, MojoFailureException.class);
             throw e;
         }
     }
 
+    /**
+     * The whole process of loading information and finally rendering the client is done in this stream.
+     * In the first step the maven plugin types get converted to the config format of the core module.
+     * It creates a {@link EnhancedClientGenConfig} as a extended version of the core config and as a state holder
+     * for the processing. That way, parallelism could be added fairly easily.
+     */
     private void processControllers(ClientGeneratorRenderer renderer) {
         stream(controllers)
                 .map(this::toEnhancedConfiguration)
@@ -166,7 +178,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
             Class<?> clazz = classLoader.loadClass(config.getController().getImplementation());
             config.setControllerClass(clazz);
         } catch (ClassNotFoundException e) {
-            StreamExceptions.throwSilent(new MojoFailureException(
+            throwSilent(new MojoFailureException(
                     "Could not scan class", e));
         }
     }
@@ -227,12 +239,12 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
     }
 
     /**
-     * Enhance a {@link EnhancedClientGenConfig} with {@link ClientGeneratorControllerDeclaration}s.<br>
+     * Enhance a {@link ClientGeneratorConfiguration} with {@link ResourceHandler}s.<br>
      * A declaration is created for every {@link RequestMethod}
      * on the {@link RequestMapping} of this {@link ClientGeneratorConfiguration}
      */
     private void fillDeclaration(ClientGeneratorConfiguration config) {
-        List<ClientGeneratorControllerDeclaration> declarations = new ArrayList<>();
+        List<ResourceHandler> declarations = new ArrayList<>();
         for (Method method : config.getControllerClass().getMethods()) {
             RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
 
@@ -245,7 +257,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
                         "The first one will be used on the client");
             }
 
-            ClientGeneratorControllerDeclaration decleration = new ClientGeneratorControllerDeclaration();
+            ResourceHandler decleration = new ResourceHandler();
             decleration.setControllerMethod(method);
             decleration.setName(requestMapping.name());
             decleration.setPath(
@@ -262,7 +274,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
 
             declarations.add(decleration);
         }
-        config.setControllerDeclarations(declarations);
+        config.setResourceHandlers(declarations);
     }
 
     private String[] getMethods(RequestMapping mapping) {
@@ -327,9 +339,9 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
      * Scans the parameters of each controller method to find path and query parameters.
      * Those are put into the decleration for the generator to render.
      *
-     * @param decleration {@link ClientGeneratorControllerDeclaration} to scan for parameters
+     * @param decleration {@link ResourceHandler} to scan for parameters
      */
-    private void fillParameters(ClientGeneratorControllerDeclaration decleration) {
+    private void fillParameters(ResourceHandler decleration) {
         for (java.lang.reflect.Parameter methodParameter : decleration.getControllerMethod().getParameters()) {
             RequestParam requestParam = methodParameter.getAnnotation(RequestParam.class);
             PathVariable pathVariable = methodParameter.getAnnotation(PathVariable.class);

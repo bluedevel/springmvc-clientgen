@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Describes a single resource handler.
+ *
  * @author Robin Engel
  */
-public class ClientGeneratorControllerDeclaration {
+public class ResourceHandler {
 
     private Method controllerMethod;
     private String name;
@@ -19,11 +21,11 @@ public class ClientGeneratorControllerDeclaration {
     private String produces;
     private List<Parameter> parameters;
 
-    public ClientGeneratorControllerDeclaration() {
+    public ResourceHandler() {
         this.parameters = new ArrayList<>();
     }
 
-    public ClientGeneratorControllerDeclaration(Method controllerMethod, String name, String path, String[] methods, String[] params, String[] headers, String consumes, String produces) {
+    public ResourceHandler(Method controllerMethod, String name, String path, String[] methods, String[] params, String[] headers, String consumes, String produces) {
         this.controllerMethod = controllerMethod;
         this.name = name;
         this.path = path;
