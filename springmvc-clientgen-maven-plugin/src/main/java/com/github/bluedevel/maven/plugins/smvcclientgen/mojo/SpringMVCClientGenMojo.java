@@ -34,18 +34,34 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
     @Parameter(property = "project", readonly = true, required = true)
     private MavenProject project;
 
+    /**
+     * All controllers to generate clients for.
+     */
     @Parameter
     private Controller[] controllers;
 
+    /**
+     * A list of custom generators.
+     * TODO: implement this feature
+     */
     @Parameter
     private Generator[] generators;
 
-    @Parameter
+    /**
+     * The generator to use by default for all controllers.
+     */
+    @Parameter(defaultValue = "javascript")
     private String generator;
 
-    @Parameter
+    /**
+     * The target file or directory to write the client(s) to.
+     */
+    @Parameter(defaultValue = "${project.build.directory}/generated-sources/clients")
     private File target;
 
+    /**
+     * A common base url to use for all clients.
+     */
     @Parameter
     private URL baseUrl;
 
