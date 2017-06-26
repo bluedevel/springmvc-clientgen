@@ -1,6 +1,7 @@
 package com.github.bluedevel.maven.plugins.smvcclientgen.mojo;
 
 import com.bluedevel.smvcclientgen.ClientGeneratorConfiguration;
+import com.bluedevel.smvcclientgen.core.BasicClientGenerator;
 import com.bluedevel.smvcclientgen.core.JavaScriptClientGenerator;
 import org.apache.commons.lang3.NotImplementedException;
 
@@ -40,9 +41,9 @@ public class ClientGeneratorFactory {
 
     public void registerDefaultGenerators() {
         generators.put("javascript",
-                new ClientGenerator(new JavaScriptClientGenerator("javascript"), "js"));
+                new ClientGenerator(new JavaScriptClientGenerator(), "js"));
         generators.put("jquery",
-                new ClientGenerator(new JavaScriptClientGenerator("jquery"), "js"));
+                new ClientGenerator(new BasicClientGenerator("jquery"), "js"));
     }
 
     public void reset() {

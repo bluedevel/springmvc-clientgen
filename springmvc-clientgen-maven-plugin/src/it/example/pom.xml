@@ -47,14 +47,6 @@
                     </controllers>
                     <!-- Default Generator -->
                     <generator>javascript</generator>
-
-                    <!--<generators>
-                        <generator>
-                            <name>test</name>
-                            <implementation>springmvcclientgen.test.TestGenerator</implementation>
-                        </generator>
-                    </generators>-->
-                    <target>${project.build.directory}/generated-sources/jsclients</target>
                 </configuration>
             </plugin>
         </plugins>

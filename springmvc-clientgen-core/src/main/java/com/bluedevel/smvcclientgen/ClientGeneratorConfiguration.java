@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Describes a controller containing multiple handlers.
+ *
  * @author Robin Engel
  */
 public class ClientGeneratorConfiguration {
@@ -12,10 +14,10 @@ public class ClientGeneratorConfiguration {
     private String name;
     private URL baseURL;
     private Class<?> controllerClass;
-    private List<ClientGeneratorControllerDeclaration> controllerDeclarations;
+    private List<ResourceHandler> resourceHandlers;
 
     public ClientGeneratorConfiguration() {
-        controllerDeclarations = new ArrayList<>();
+        resourceHandlers = new ArrayList<>();
     }
 
     public String getName() {
@@ -42,11 +44,11 @@ public class ClientGeneratorConfiguration {
         this.controllerClass = controllerClass;
     }
 
-    public List<ClientGeneratorControllerDeclaration> getControllerDeclarations() {
-        return controllerDeclarations;
+    public List<ResourceHandler> getResourceHandlers() {
+        return resourceHandlers;
     }
 
-    public void setControllerDeclarations(List<ClientGeneratorControllerDeclaration> controllerDeclarations) {
-        this.controllerDeclarations = controllerDeclarations;
+    public void setResourceHandlers(List<ResourceHandler> resourceHandlers) {
+        this.resourceHandlers = resourceHandlers;
     }
 }

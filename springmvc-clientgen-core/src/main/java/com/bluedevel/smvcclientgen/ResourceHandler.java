@@ -1,31 +1,35 @@
 package com.bluedevel.smvcclientgen;
 
-import org.springframework.web.bind.annotation.RequestMethod;
-
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
+ * Describes a single resource handler.
+ *
  * @author Robin Engel
  */
-public class ClientGeneratorControllerDeclaration {
+public class ResourceHandler {
 
     private Method controllerMethod;
     private String name;
-    private String[] path;
-    private RequestMethod[] method;
+    private String path;
+    private String[] methods;
     private String[] params;
     private String[] headers;
-    private String[] consumes;
-    private String[] produces;
+    private String consumes;
+    private String produces;
+    private List<Parameter> parameters;
 
-    public ClientGeneratorControllerDeclaration() {
+    public ResourceHandler() {
+        this.parameters = new ArrayList<>();
     }
 
-    public ClientGeneratorControllerDeclaration(Method controllerMethod, String name, String[] path, RequestMethod[] method, String[] params, String[] headers, String[] consumes, String[] produces) {
+    public ResourceHandler(Method controllerMethod, String name, String path, String[] methods, String[] params, String[] headers, String consumes, String produces) {
         this.controllerMethod = controllerMethod;
         this.name = name;
         this.path = path;
-        this.method = method;
+        this.methods = methods;
         this.params = params;
         this.headers = headers;
         this.consumes = consumes;
@@ -48,20 +52,20 @@ public class ClientGeneratorControllerDeclaration {
         this.name = name;
     }
 
-    public String[] getPath() {
+    public String getPath() {
         return path;
     }
 
-    public void setPath(String[] path) {
+    public void setPath(String path) {
         this.path = path;
     }
 
-    public RequestMethod[] getMethod() {
-        return method;
+    public String[] getMethods() {
+        return methods;
     }
 
-    public void setMethod(RequestMethod[] method) {
-        this.method = method;
+    public void setMethods(String[] methods) {
+        this.methods = methods;
     }
 
     public String[] getParams() {
@@ -80,20 +84,27 @@ public class ClientGeneratorControllerDeclaration {
         this.headers = headers;
     }
 
-    public String[] getConsumes() {
+    public String getConsumes() {
         return consumes;
     }
 
-    public void setConsumes(String[] consumes) {
+    public void setConsumes(String consumes) {
         this.consumes = consumes;
     }
 
-    public String[] getProduces() {
+    public String getProduces() {
         return produces;
     }
 
-    public void setProduces(String[] produces) {
+    public void setProduces(String produces) {
         this.produces = produces;
     }
 
+    public List<Parameter> getParameters() {
+        return parameters;
+    }
+
+    public void setParameters(List<Parameter> parameters) {
+        this.parameters = parameters;
+    }
 }
