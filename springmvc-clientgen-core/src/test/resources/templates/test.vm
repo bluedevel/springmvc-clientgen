@@ -1,0 +1,7 @@
+$className,$baseUrl
+#foreach($function in $functions)
+    name:$!function.name;path:$!function.path;method:$!function.method;consumes:$!function.consumes
+    #foreach($param in $!function.parameters)
+    param:$!param.name;type:$!param.type
+    #end
+#end

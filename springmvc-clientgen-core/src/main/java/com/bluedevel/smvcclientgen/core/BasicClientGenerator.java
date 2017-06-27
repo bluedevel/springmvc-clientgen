@@ -83,7 +83,7 @@ public class BasicClientGenerator implements ClientGenerator {
     }
 
     private FunctionConfig getFunctionConfig(EnhancedResourceHandler declaration) {
-        String methodName = declaration.getControllerMethod().getName();
+        String methodName = declaration.getName();
         String requestMethod = declaration.method;
 
         // check weather implementing method name starts with http method

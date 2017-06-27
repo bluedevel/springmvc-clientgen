@@ -259,7 +259,7 @@ public class SpringMVCClientGenMojo extends AbstractMojo {
 
             ResourceHandler decleration = new ResourceHandler();
             decleration.setControllerMethod(method);
-            decleration.setName(requestMapping.name());
+            decleration.setName(method.getName());
             decleration.setPath(
                     getPath(requestMapping));
             decleration.setMethods(
