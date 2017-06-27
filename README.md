@@ -36,7 +36,7 @@
                             <generator>jquery</generator>
                         </controller>
                         <controller>
-                            <baseUrl>http://nico.peter</baseUrl>
+                            <baseUrl>http://hans.peter</baseUrl>
                             <implementation>springmvcclientgen.test.OtherExampleController</implementation>
                         </controller>
                     </controllers>
